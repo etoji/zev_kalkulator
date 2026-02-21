@@ -1877,3 +1877,127 @@
         transform: rotate(360deg);
       }
     }
+
+    /* ─── Tariff Popup on Topbar ─── */
+    .tb-tarif-wrap {
+      position: relative;
+      cursor: pointer;
+    }
+
+    .tb-popup {
+      display: none;
+      position: absolute;
+      top: 100%;
+      right: 0;
+      margin-top: 8px;
+      background: rgba(26, 26, 26, 0.95);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 16px 18px;
+      min-width: 360px;
+      max-width: 420px;
+      z-index: 1000;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+      animation: popupFadeIn 0.2s ease;
+    }
+
+    .tb-tarif-wrap:hover .tb-popup {
+      display: block;
+    }
+
+    @keyframes popupFadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-4px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .tb-popup-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--brand-cyan);
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .tb-popup-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .tb-popup-row {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 4px 12px;
+      align-items: start;
+    }
+
+    .tb-popup-label {
+      font-size: 10px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.5);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding-top: 1px;
+    }
+
+    .tb-popup-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: white;
+      font-weight: 500;
+    }
+
+    .tb-popup-source {
+      grid-column: 2;
+      font-size: 9px;
+      color: rgba(255, 255, 255, 0.35);
+      line-height: 1.4;
+      font-style: italic;
+    }
+
+    .tb-popup-badge {
+      display: inline-block;
+      font-size: 8px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 1px 5px;
+      border-radius: 3px;
+      margin-left: 6px;
+    }
+
+    .badge-api {
+      background: rgba(0, 174, 239, 0.2);
+      color: var(--brand-cyan);
+    }
+
+    .badge-lokal {
+      background: rgba(76, 175, 80, 0.2);
+      color: #81C784;
+    }
+
+    .badge-geschaetzt {
+      background: rgba(255, 183, 77, 0.2);
+      color: #FFB74D;
+    }
+
+    .tb-popup-footer {
+      margin-top: 12px;
+      padding-top: 8px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      font-size: 9px;
+      color: rgba(255, 255, 255, 0.3);
+      line-height: 1.5;
+    }

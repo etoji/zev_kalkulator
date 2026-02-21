@@ -1,6 +1,49 @@
 ﻿let T = { ...TARIFE.ewb.tarife.ewb_basis };
 const tog = { wp: 'nein', em: 'nein', ma: 'nein', zv: 'nein' };
 
+// Track source of each tariff component for the popup
+let tariffSource = {
+  sp: { value: 0, source: 'Noch nicht geladen', type: 'none' },
+  ev: { value: 0, source: 'Noch nicht geladen', type: 'none' },
+  zt: { value: 0, source: '80% des Bezugstarifs (StromVG)', type: 'none' }
+};
+
+function updateTariffPopup() {
+  const grid = document.getElementById('tb-popup-grid');
+  const footer = document.getElementById('tb-popup-footer');
+  if (!grid) return;
+
+  const badgeHtml = (type) => {
+    const map = {
+      'api': '<span class="tb-popup-badge badge-api">ElCom API</span>',
+      'lokal': '<span class="tb-popup-badge badge-lokal">Hinterlegt</span>',
+      'geschaetzt': '<span class="tb-popup-badge badge-geschaetzt">Gesch\u00E4tzt</span>',
+      'none': ''
+    };
+    return map[type] || '';
+  };
+
+  grid.innerHTML = `
+    <div class="tb-popup-row">
+      <span class="tb-popup-label">Strompreis</span>
+      <span class="tb-popup-val">${tariffSource.sp.value.toFixed(2)} Rp/kWh ${badgeHtml(tariffSource.sp.type)}</span>
+      <span class="tb-popup-source">${tariffSource.sp.source}</span>
+    </div>
+    <div class="tb-popup-row">
+      <span class="tb-popup-label">Einspeisung</span>
+      <span class="tb-popup-val">${tariffSource.ev.value.toFixed(2)} Rp/kWh ${badgeHtml(tariffSource.ev.type)}</span>
+      <span class="tb-popup-source">${tariffSource.ev.source}</span>
+    </div>
+    <div class="tb-popup-row">
+      <span class="tb-popup-label">ZEV-Tarif</span>
+      <span class="tb-popup-val">${tariffSource.zt.value.toFixed(2)} Rp/kWh ${badgeHtml(tariffSource.zt.type)}</span>
+      <span class="tb-popup-source">${tariffSource.zt.source}</span>
+    </div>
+  `;
+
+  footer.textContent = 'Bezugstarife: ElCom Kat. H4 (5-Zi-Whg, 4\u2019500 kWh/J) \u00B7 Einspeisung: gem\u00E4ss Netzbetreiber \u00B7 ZEV: 80% des Bezugstarifs';
+}
+
 function setToggle(k, v) {
   tog[k] = v;
   document.getElementById(`${k}-ja`).classList.toggle('on', v === 'ja');
@@ -68,6 +111,13 @@ function applyTariff(operatorName, totalRp, energyRp, gridusageRp, chargeRp, aid
   info.classList.add('visible');
   // Hide loading
   document.getElementById('tariffLoading').style.display = 'none';
+  // Update popup source info
+  tariffSource = {
+    sp: { value: T.sp, source: `ElCom GraphQL API \u2014 Gemeinde-Nr. via GeoAdmin`, type: 'api' },
+    ev: { value: T.ev, source: `Formel: 40% des Energiepreises (${energyRp.toFixed(2)} Rp), min. 6 Rp/kWh`, type: 'geschaetzt' },
+    zt: { value: T.zt, source: `Berechnet: ${T.sp.toFixed(2)} \u00D7 80% = ${T.zt.toFixed(2)} Rp/kWh`, type: 'geschaetzt' }
+  };
+  updateTariffPopup();
   calc();
 }
 
@@ -129,6 +179,25 @@ function applyOperatorOnly(operatorName) {
   info.classList.add('visible');
   // Hide loading
   document.getElementById('tariffLoading').style.display = 'none';
+  // Update popup source info
+  if (matched) {
+    const evType = T.ev_quelle === 'offiziell' ? 'lokal' : 'geschaetzt';
+    const evSrc = T.ev_quelle === 'offiziell'
+      ? `Offizielle Angabe des Netzbetreibers (Stand 2026)`
+      : `Gesch\u00E4tzt basierend auf Marktdaten`;
+    tariffSource = {
+      sp: { value: T.sp, source: `Hinterlegte Daten: ${T.name} (ElCom H4 2026)`, type: 'lokal' },
+      ev: { value: T.ev, source: evSrc, type: evType },
+      zt: { value: T.zt, source: `Berechnet: ${T.sp.toFixed(2)} \u00D7 80% = ${T.zt.toFixed(2)} Rp/kWh`, type: 'geschaetzt' }
+    };
+  } else {
+    tariffSource = {
+      sp: { value: T.sp, source: `Schweizer Durchschnitt H4 2026 (ElCom Median)`, type: 'geschaetzt' },
+      ev: { value: T.ev, source: `Prognose 2026: CH-Durchschnitt (-25% gg\u00FC. 2025)`, type: 'geschaetzt' },
+      zt: { value: T.zt, source: `Berechnet: ${T.sp.toFixed(2)} \u00D7 80% = ${T.zt.toFixed(2)} Rp/kWh`, type: 'geschaetzt' }
+    };
+  }
+  updateTariffPopup();
   calc();
 }
 

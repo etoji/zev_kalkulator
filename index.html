@@ -21,8 +21,17 @@
     <div class="tb-logo-divider"></div>
     <span class="tb-app-name">ZEV Baukostenrechner</span>
     <div class="tb-right">
-      <span class="tb-tarif">Aktiver Tarif: <b id="tb-tarif">Kein Tarif geladen</b> <span class="tb-auto"
-          id="tb-auto"></span></span>
+      <div class="tb-tarif-wrap">
+        <span class="tb-tarif">Aktiver Tarif: <b id="tb-tarif">Kein Tarif geladen</b> <span class="tb-auto"
+            id="tb-auto"></span></span>
+        <div class="tb-popup" id="tb-popup">
+          <div class="tb-popup-title">Tarifquellen &amp; Berechnungsbasis</div>
+          <div class="tb-popup-grid" id="tb-popup-grid">
+            <!-- Dynamically populated by JS -->
+          </div>
+          <div class="tb-popup-footer" id="tb-popup-footer"></div>
+        </div>
+      </div>
       <div class="tb-live"></div>
     </div>
   </header>

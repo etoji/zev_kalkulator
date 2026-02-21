@@ -484,6 +484,10 @@
       background: var(--brand-cyan);
     }
 
+    #roofSlider::-webkit-slider-thumb {
+      background: var(--brand-cyan);
+    }
+
     .split-range-track {
       position: absolute;
       top: 15px;
@@ -1893,6 +1897,36 @@
             <div class="solar-val" id="solarVal"></div>
             <div class="solar-label" id="solarLabel"></div>
           </div>
+
+          <!-- Roof area slider -->
+          <div class="roof-slider-wrap" id="roofSliderWrap" style="display:none; margin-top:12px; padding:10px 0 6px;">
+            <div class="field-label" style="margin-bottom:8px;">Genutzte Dachfläche
+              <span class="tip"
+                data-tip="Verschieben Sie den Regler, um nur einen Teil der geeigneten Dachfläche für die PV-Anlage zu nutzen.">?</span>
+            </div>
+
+            <!-- Percentage display -->
+            <div style="text-align:center; margin-bottom:6px;">
+              <span id="roofSliderVal"
+                style="font-family:'JetBrains Mono',monospace; font-size:18px; font-weight:600; color:var(--brand-cyan-dark);">100%</span>
+            </div>
+
+            <!-- Slider (reuse split-range-wrap styling) -->
+            <div class="split-range-wrap">
+              <div class="split-range-track">
+                <div class="split-track-fill" id="roof-track-fill" style="left:0%; right:0%"></div>
+              </div>
+              <input type="range" id="roofSlider" min="10" max="100" value="100" step="1" oninput="onRoofSlider()">
+            </div>
+
+            <!-- Labels under slider -->
+            <div
+              style="display:flex; justify-content:space-between; font-size:11px; color:var(--muted); margin-top:4px;">
+              <span id="roofAreaUsed" style="font-weight:600; color:var(--charcoal);">—</span>
+              <span id="roofAreaMax">—</span>
+            </div>
+          </div>
+
           <div class="tariff-info" id="tariffInfo">
             <div class="tariff-title" id="tariffTitle"></div>
             <div class="tariff-grid" id="tariffGrid"></div>
@@ -2603,6 +2637,32 @@
       calc();
     }
 
+    // Solar roof area slider
+    let solarMaxFlaeche = 0; // m² of suitable roof
+    let solarMaxKwh = 0;     // max kWh/year at 100%
+
+    function onRoofSlider() {
+      const pct = +document.getElementById('roofSlider').value;
+      const usedFlaeche = Math.round(solarMaxFlaeche * pct / 100);
+      const usedKwh = Math.round(solarMaxKwh * pct / 100);
+      const kwp = Math.round(usedKwh / 1000 * 10) / 10;
+
+      document.getElementById('roofSliderVal').textContent = pct + '%';
+      document.getElementById('roofAreaUsed').textContent = f(usedFlaeche) + ' m\u00B2 genutzt';
+
+      // Track fill (cyan bar from left to slider position)
+      const fill = document.getElementById('roof-track-fill');
+      if (fill) {
+        fill.style.left = '0%';
+        fill.style.right = (100 - pct) + '%';
+        fill.style.background = 'var(--brand-cyan)';
+      }
+
+      // Update kWp and production
+      document.getElementById('kwp').value = kwp;
+      syncKwp();
+    }
+
     // Apply tariff data to the calculator and UI
     function applyTariff(operatorName, totalRp, energyRp, gridusageRp, chargeRp, aidfeeRp) {
       T.sp = totalRp;
@@ -2846,16 +2906,21 @@
         });
         if (bestEgid && bestTotal > 0) {
           const b = buildings[bestEgid];
-          const kwp = Math.round(bestTotal / 1000 * 10) / 10;
           info.classList.add('visible');
           document.getElementById('solarVal').textContent = f(bestTotal) + ' kWh/Jahr';
           const klassen = ['', 'Gering', 'Mittel', 'Gut', 'Sehr gut'];
-          const skipped = totalSurfaces - b.count;
           document.getElementById('solarLabel').textContent =
             `Solarpotential (${b.count} von ${totalSurfaces} Dachfl., ${f(Math.round(b.flaeche))} m\u00B2, Eignung: ${klassen[b.best] || '?'}) \u2014 Quelle: sonnendach.ch`;
-          // Auto-fill kWp
-          document.getElementById('kwp').value = kwp;
-          syncKwp();
+          // Store solar data for roof slider
+          solarMaxFlaeche = Math.round(b.flaeche);
+          solarMaxKwh = bestTotal;
+          // Show roof slider
+          const wrap = document.getElementById('roofSliderWrap');
+          wrap.style.display = 'block';
+          document.getElementById('roofSlider').value = 100;
+          document.getElementById('roofSlider').max = 100;
+          document.getElementById('roofAreaMax').textContent = 'Max: ' + f(solarMaxFlaeche) + ' m\u00B2';
+          onRoofSlider(); // Apply 100% initially
         } else {
           info.classList.add('visible');
           document.getElementById('solarVal').textContent = 'Keine nutzbaren Dachflächen';

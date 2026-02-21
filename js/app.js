@@ -283,32 +283,112 @@ async function fetchAddresses(q) {
 function onAddressSelect(res) {
   const dd = document.getElementById('addrDropdown');
   dd.classList.remove('open');
-  // Strip HTML from label
   const tmp = document.createElement('span');
   tmp.innerHTML = res.attrs.label;
   document.getElementById('objektName').value = tmp.textContent;
-  selectedCoords = { x: res.attrs.y, y: res.attrs.x }; // GeoAdmin: y=easting, x=northing
+  selectedCoords = { x: res.attrs.y, y: res.attrs.x };
   fetchSolarPotential(selectedCoords.x, selectedCoords.y);
-  // Extract BFS municipality number from detail field
-  // Format: "street nr plz city BFSNR canton ch cantoncode"
-  const detail = res.attrs.detail || '';
-  const parts = detail.split(' ');
-  // BFS-Nr is typically the 4th element (after street, nr, plz, city...)
-  // More robust: find the 3-4 digit number after PLZ that's not a PLZ
+  // Use GeoAdmin municipality layer to get BFS number reliably
+  fetchMunicipalityAndTariff(selectedCoords.x, selectedCoords.y);
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.addr-wrap')) {
+    document.getElementById('addrDropdown').classList.remove('open');
+  }
+});
+
+/* ── Municipality + Tariff Detection ── */
+
+async function fetchMunicipalityAndTariff(x, y) {
+  const info = document.getElementById('tariffInfo');
+  info.classList.remove('visible');
+  document.getElementById('tariffLoading').style.display = 'block';
+
+  // Step 1: Get municipality name and BFS number from GeoAdmin (CORS-enabled)
   let bfsNr = null;
-  for (let i = 0; i < parts.length; i++) {
-    const n = parseInt(parts[i]);
-    if (n > 0 && n < 10000 && parts[i].length <= 4 && i > 2) {
-      // Skip if it's the PLZ (4 digits, position ~2)
-      const prev = parseInt(parts[i - 1]);
-      if (parts[i].length <= 4 && isNaN(prev)) {
-        // This is likely the BFS-Nr (comes after city name)
-        bfsNr = parts[i];
-        break;
+  let gemName = null;
+  try {
+    const gemUrl = `https://api3.geo.admin.ch/rest/services/api/MapServer/identify?geometryType=esriGeometryPoint&geometry=${x},${y}&mapExtent=${x - 50},${y - 50},${x + 50},${y + 50}&imageDisplay=100,100,96&layers=all:ch.swisstopo.swissboundaries3d-gemeinde-flaeche.fill&tolerance=10&sr=2056&returnGeometry=false&lang=de`;
+    const r = await fetch(gemUrl);
+    const data = await r.json();
+    if (data.results && data.results.length) {
+      // Filter for CURRENT municipality (skip historical entries like "Bümpliz")
+      const current = data.results.find(r => r.attributes.is_current_jahr === true || r.attributes.is_current_jahr === 'true');
+      const best = current || data.results[0];
+      gemName = best.attributes.gemname || best.attributes.label || null;
+      // gde_nr in current entries contains the BFS number (e.g. 351 for Bern)
+      if (best.attributes.gde_nr) {
+        bfsNr = String(best.attributes.gde_nr);
       }
+      console.log('Municipality:', gemName, 'BFS:', bfsNr);
+    }
+  } catch (e) {
+    console.warn('GeoAdmin identify failed:', e);
+  }
+
+  // Fallback: Get BFS from gg25 search if identify didn't return gde_nr
+  if (gemName && !bfsNr) {
+    try {
+      const bfsUrl = `https://api3.geo.admin.ch/rest/services/api/SearchServer?searchText=${encodeURIComponent(gemName)}&type=locations&origins=gg25&sr=2056&limit=1`;
+      const r = await fetch(bfsUrl);
+      const data = await r.json();
+      if (data.results && data.results.length) {
+        bfsNr = String(data.results[0].attrs.featureId);
+        console.log('BFS from gg25 search:', bfsNr);
+      }
+    } catch (e) {
+      console.warn('GeoAdmin BFS lookup failed:', e);
     }
   }
-  if (bfsNr) fetchElcomTariff(bfsNr);
+
+  if (!bfsNr && !gemName) {
+    document.getElementById('tariffLoading').style.display = 'none';
+    return;
+  }
+
+  // Step 2: Try to get operator name from ElCom municipality page via CORS proxy
+  let operatorName = null;
+  const pageUrl = `https://www.strompreis.elcom.admin.ch/de/municipality/${bfsNr}`;
+  const proxies = [
+    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(pageUrl)}`,
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(pageUrl)}`,
+    `https://corsproxy.io/?${encodeURIComponent(pageUrl)}`
+  ];
+
+  for (const proxyUrl of proxies) {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 6000);
+      const r = await fetch(proxyUrl, { signal: controller.signal });
+      clearTimeout(timeout);
+      if (!r.ok) continue;
+      const html = await r.text();
+      const match = html.match(/<script id="__NEXT_DATA__"[^>]*>(.*?)<\/script>/);
+      if (match) {
+        const nd = JSON.parse(match[1]);
+        const ops = nd?.props?.pageProps?.operators;
+        if (ops && ops.length) {
+          operatorName = ops[0].name;
+          console.log('ElCom operator found:', operatorName);
+          break;
+        }
+      }
+    } catch (e) {
+      console.warn('ElCom proxy failed:', e.message || e);
+    }
+  }
+
+  // Step 3: Apply the tariff
+  if (operatorName) {
+    applyOperatorOnly(operatorName);
+  } else if (gemName) {
+    // No operator from proxy — use municipality name to guess
+    applyOperatorOnly(gemName);
+  } else {
+    document.getElementById('tariffLoading').style.display = 'none';
+  }
 }
 
 async function fetchSolarPotential(x, y) {

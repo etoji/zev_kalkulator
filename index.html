@@ -1860,7 +1860,7 @@
     <div class="tb-logo-divider"></div>
     <span class="tb-app-name">ZEV Baukostenrechner</span>
     <div class="tb-right">
-      <span class="tb-tarif">Aktiver Tarif: <b id="tb-tarif">ewb.basis.STROM</b> <span class="tb-auto"
+      <span class="tb-tarif">Aktiver Tarif: <b id="tb-tarif">Kein Tarif geladen</b> <span class="tb-auto"
           id="tb-auto"></span></span>
       <div class="tb-live"></div>
     </div>
@@ -1871,34 +1871,7 @@
     <!-- ══ SIDEBAR ═══════════════════════════════════ -->
     <aside class="sidebar">
 
-      <div class="sb-section">
-        <div class="sb-heading">Stromtarif</div>
 
-        <div class="tariff-toggle" id="tariffToggle" onclick="toggleTariffFields()">
-          <span class="toggle-arrow">▸</span> Tarif manuell anpassen
-        </div>
-
-        <div class="tariff-fields" id="tariffFields">
-          <div class="field">
-            <div class="field-label">Stromlieferant
-              <span class="tip" data-tip="Wird automatisch erkannt bei Adresseingabe. Hier manuell änderbar.">?</span>
-            </div>
-            <div class="ctrl"><select id="lieferant" onchange="onLieferantChange()">
-                <option value="ewb">EWB (Energie Wasser Bern)</option>
-                <option value="bkw">BKW Energie</option>
-                <option value="ckw">CKW (Centralschweizerische Kraftwerke)</option>
-                <option value="iwb">IWB (Industrielle Werke Basel)</option>
-              </select></div>
-          </div>
-
-          <div class="field">
-            <div class="field-label">Tarif</div>
-            <div class="ctrl"><select id="stromtarif" onchange="onTarifChange()">
-                <option value="ewb_basis">ewb.basis.STROM</option>
-              </select></div>
-          </div>
-        </div>
-      </div>
 
       <div class="sb-section">
         <div class="sb-heading">Objekt & Kontakt</div>
@@ -1946,7 +1919,7 @@
             <span class="tip" data-tip="Anzahl der Wohnungen im Mehrfamilienhaus">?</span>
           </div>
           <div class="ctrl">
-            <input type="number" id="anzahlWE" value="9" min="1" oninput="calc()">
+            <input type="number" id="anzahlWE" value="" min="1" oninput="calc()" placeholder="z.B. 9">
             <span class="ctrl-unit">WE</span>
           </div>
         </div>
@@ -1992,7 +1965,7 @@
         <div class="field">
           <div class="field-label">Offerte exkl. MWST</div>
           <div class="ctrl">
-            <input type="number" id="offerte" value="31300" oninput="calc()">
+            <input type="number" id="offerte" value="" oninput="calc()" placeholder="z.B. 31300">
             <span class="ctrl-unit">CHF</span>
           </div>
         </div>
@@ -2002,7 +1975,8 @@
             <span class="tip" data-tip="Einmalvergütung vom Bund für neue Solaranlagen">?</span>
           </div>
           <div class="ctrl">
-            <input type="number" id="foerderung" value="11099" oninput="calc()">
+            <input type="number" id="foerderung" value="" readonly
+              style="cursor:default; color:var(--charcoal); background:var(--alabaster-light); opacity:.85;">
             <span class="ctrl-unit">CHF</span>
           </div>
         </div>
@@ -2629,43 +2603,57 @@
       calc();
     }
 
-    function onLieferantChange() {
-      const lf = document.getElementById('lieferant').value;
-      const sel = document.getElementById('stromtarif');
-      sel.innerHTML = '';
-      Object.entries(TARIFE[lf].tarife).forEach(([k, t]) => {
-        const o = document.createElement('option');
-        o.value = k; o.textContent = t.name; sel.appendChild(o);
-      });
-      onTarifChange();
-    }
-
-    function toggleTariffFields() {
-      const fields = document.getElementById('tariffFields');
-      const toggle = document.getElementById('tariffToggle');
-      fields.classList.toggle('open');
-      toggle.classList.toggle('open');
-    }
-
-    let tariffAutoDetected = false;
-
-    function onTarifChange() {
-      const lf = document.getElementById('lieferant').value;
-      const tk = document.getElementById('stromtarif').value;
-      T = TARIFE[lf].tarife[tk];
+    // Apply tariff data to the calculator and UI
+    function applyTariff(operatorName, totalRp, energyRp, gridusageRp, chargeRp, aidfeeRp) {
+      T.sp = totalRp;
+      T.ev = Math.max(energyRp * 0.4, 6); // Einspeisevergütung: min 6 Rp/kWh (2026)
+      T.zt = Math.round(totalRp * 0.8 * 100) / 100; // ZEV = 80% des Netzpreises
+      T.name = operatorName + ' H4';
+      // Top-bar
       document.getElementById('tb-tarif').textContent = T.name;
-      document.getElementById('tb-auto').textContent = tariffAutoDetected ? '(automatisch)' : '';
+      document.getElementById('tb-auto').textContent = '(automatisch)';
+      // Sidebar tariff display
       document.getElementById('ti-sp').textContent = T.sp.toFixed(2) + ' Rp/kWh';
       document.getElementById('ti-ev').textContent = T.ev.toFixed(2) + ' Rp/kWh';
       document.getElementById('ti-zt').textContent = T.zt.toFixed(2) + ' Rp/kWh';
-      document.getElementById('ti-zm').textContent = T.zm.toFixed(2) + ' CHF';
       document.getElementById('no-ev-label').textContent = T.ev.toFixed(2);
       document.getElementById('zev-zt-label').textContent = T.zt.toFixed(2);
+      // Info box
+      const info = document.getElementById('tariffInfo');
+      document.getElementById('tariffTitle').textContent = `⚡ ${operatorName} — Stromtarif 2026`;
+      document.getElementById('tariffGrid').innerHTML = `
+        <span>Energie:</span><span class="tg-val">${energyRp.toFixed(2)} Rp/kWh</span>
+        <span>Netznutzung:</span><span class="tg-val">${gridusageRp.toFixed(2)} Rp/kWh</span>
+        <span>Abgaben:</span><span class="tg-val">${chargeRp.toFixed(2)} Rp/kWh</span>
+        <span>KEV/Reserve:</span><span class="tg-val">${aidfeeRp.toFixed(2)} Rp/kWh</span>
+        <span style="font-weight:700">Total:</span><span class="tg-val" style="color:var(--brand-cyan-dark)">${totalRp.toFixed(2)} Rp/kWh</span>
+      `;
+      document.getElementById('tariffDetail').textContent = 'Kat. H4 (5-Zi-Whg, 4\'500 kWh/J) · Quelle: ElCom';
+      info.classList.add('visible');
       calc();
     }
 
+    // Show operator-only info (when we know operator but not detailed tariffs)
+    function applyOperatorOnly(operatorName) {
+      const info = document.getElementById('tariffInfo');
+      document.getElementById('tariffTitle').textContent = `⚡ ${operatorName}`;
+      document.getElementById('tariffGrid').innerHTML = '';
+      document.getElementById('tariffDetail').textContent = 'Tarif wird geladen oder nicht verfügbar.';
+      info.classList.add('visible');
+    }
+
     function syncKwp() {
-      document.getElementById('produktion').value = Math.round((+document.getElementById('kwp').value || 0) * 1000);
+      const kwp = +document.getElementById('kwp').value || 0;
+      document.getElementById('produktion').value = Math.round(kwp * 1000);
+      // Auto-calculate Pronovo EIV 2026 (Einmalvergütung)
+      // Base: CHF 350/kWp for first 30 kWp, CHF 220/kWp above
+      let eiv = 0;
+      if (kwp > 0) {
+        const first30 = Math.min(kwp, 30);
+        const above30 = Math.max(kwp - 30, 0);
+        eiv = Math.round(first30 * 350 + above30 * 220);
+      }
+      document.getElementById('foerderung').value = eiv > 0 ? eiv : '';
       calc();
     }
 
@@ -2828,37 +2816,13 @@
     });
 
     /* ── ElCom Tariff Auto-Detection ── */
-    // CORS proxy fallbacks (needed when running from file:// or if ElCom doesn't allow origin)
-    const CORS_PROXIES = [
-      url => url, // try direct first
-      url => 'https://corsproxy.io/?' + encodeURIComponent(url),
-      url => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url)
-    ];
-
-    async function corsPost(url, body) {
-      const opts = { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) };
-      for (const proxy of CORS_PROXIES) {
-        try {
-          const r = await fetch(proxy(url), opts);
-          if (r.ok) return await r.json();
-        } catch (e) { /* try next proxy */ }
-      }
-      throw new Error('All CORS proxies failed');
-    }
-
-    // Map ElCom operator names → our TARIFE keys
-    const OPERATOR_MAP = {
-      'energie wasser bern': 'ewb',
-      'bkw energie': 'bkw', 'bkw': 'bkw',
-      'centralschweizerische kraftwerke': 'ckw', 'ckw': 'ckw',
-      'industrielle werke basel': 'iwb', 'iwb': 'iwb'
-    };
 
     async function fetchElcomTariff(bfsNr) {
       const info = document.getElementById('tariffInfo');
       info.classList.remove('visible');
+
+      // Approach 1: Try GraphQL POST directly (works from HTTPS origins if ElCom has CORS)
       try {
-        // Single GraphQL call → returns operator name + tariff data (no build ID dependency!)
         const gqlUrl = 'https://www.strompreis.elcom.admin.ch/api/graphql';
         const gqlBody = {
           operationName: 'ObservationsWithAllPriceComponents',
@@ -2873,61 +2837,50 @@
             }
           }`
         };
-        const gqlData = await corsPost(gqlUrl, gqlBody);
-        const obs = gqlData?.data?.observations;
-        if (!obs || !obs.length) return;
-
-        const t = obs[0];
-        const operatorName = t.operator || 'Unbekannt';
-
-        // Optionally match to our dropdown (cosmetic only)
-        const opLower = operatorName.toLowerCase();
-        for (const [key, val] of Object.entries(OPERATOR_MAP)) {
-          if (opLower.includes(key)) {
-            document.getElementById('lieferant').value = val;
-            break;
-          }
+        // Try direct POST, then via corsproxy.io
+        let gqlData = null;
+        try {
+          const r = await fetch(gqlUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(gqlBody) });
+          if (r.ok) gqlData = await r.json();
+        } catch (e) { }
+        if (!gqlData) {
+          try {
+            const r = await fetch('https://corsproxy.io/?' + encodeURIComponent(gqlUrl), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(gqlBody) });
+            if (r.ok) gqlData = await r.json();
+          } catch (e) { }
         }
+        if (gqlData?.data?.observations?.length) {
+          const t = gqlData.data.observations[0];
+          applyTariff(t.operator || 'Unbekannt', Number(t.total), Number(t.energy), Number(t.gridusage), Number(t.charge), Number(t.aidfee));
+          return; // done!
+        }
+      } catch (e) { console.warn('GraphQL attempt failed:', e); }
 
-        // Always keep dropdowns hidden — live data is used
-        tariffAutoDetected = true;
-        document.getElementById('tariffFields').classList.remove('open');
-        document.getElementById('tariffToggle').classList.remove('open');
-
-        // Apply live tariff to calculator
-        const totalRp = Number(t.total);
-        const energyRp = Number(t.energy);
-        T.sp = totalRp;
-        T.ev = Math.max(energyRp * 0.4, 6); // Einspeisevergütung: min 6 Rp/kWh (2026)
-        T.zt = Math.round(totalRp * 0.8 * 100) / 100; // ZEV = 80% des Netzpreises
-        T.name = operatorName + ' H4';
-
-        // Update top-bar
-        document.getElementById('tb-tarif').textContent = T.name;
-        document.getElementById('tb-auto').textContent = '(automatisch)';
-
-        // Update tariff info displays
-        document.getElementById('ti-sp').textContent = T.sp.toFixed(2) + ' Rp/kWh';
-        document.getElementById('ti-ev').textContent = T.ev.toFixed(2) + ' Rp/kWh';
-        document.getElementById('ti-zt').textContent = T.zt.toFixed(2) + ' Rp/kWh';
-        document.getElementById('no-ev-label').textContent = T.ev.toFixed(2);
-        document.getElementById('zev-zt-label').textContent = T.zt.toFixed(2);
-
-        // Show tariff breakdown in info box
-        document.getElementById('tariffTitle').textContent = `⚡ ${operatorName} — Stromtarif 2026`;
-        document.getElementById('tariffGrid').innerHTML = `
-          <span>Energie:</span><span class="tg-val">${energyRp.toFixed(2)} Rp/kWh</span>
-          <span>Netznutzung:</span><span class="tg-val">${Number(t.gridusage).toFixed(2)} Rp/kWh</span>
-          <span>Abgaben:</span><span class="tg-val">${Number(t.charge).toFixed(2)} Rp/kWh</span>
-          <span>KEV/Reserve:</span><span class="tg-val">${Number(t.aidfee).toFixed(2)} Rp/kWh</span>
-          <span style="font-weight:700">Total:</span><span class="tg-val" style="color:var(--brand-cyan-dark)">${totalRp.toFixed(2)} Rp/kWh</span>
-        `;
-        document.getElementById('tariffDetail').textContent = `Kat. H4 (5-Zi-Whg, 4'500 kWh/J) · Quelle: ElCom`;
-        info.classList.add('visible');
-
-        calc();
-      } catch (e) {
-        console.warn('ElCom tariff fetch failed:', e);
+      // Approach 2: Fallback — fetch municipality page via GET proxies
+      const pageUrl = `https://www.strompreis.elcom.admin.ch/de/municipality/${bfsNr}`;
+      const proxies = [
+        'https://api.allorigins.win/raw?url=' + encodeURIComponent(pageUrl),
+        'https://corsproxy.io/?' + encodeURIComponent(pageUrl)
+      ];
+      for (const proxyUrl of proxies) {
+        try {
+          const r = await fetch(proxyUrl);
+          if (!r.ok) continue;
+          const html = await r.text();
+          // Extract __NEXT_DATA__ JSON from the HTML
+          const match = html.match(/<script id="__NEXT_DATA__"[^>]*>(.*?)<\/script>/);
+          if (match) {
+            const nd = JSON.parse(match[1]);
+            const pp = nd?.props?.pageProps;
+            if (pp?.operators?.length) {
+              const operatorName = pp.operators[0].name;
+              applyOperatorOnly(operatorName);
+              document.getElementById('tb-tarif').textContent = operatorName;
+              document.getElementById('tb-auto').textContent = '(erkannt)';
+              return;
+            }
+          }
+        } catch (e) { console.warn('Proxy fallback failed:', proxyUrl, e); }
       }
     }
 

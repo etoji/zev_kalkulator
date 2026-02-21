@@ -2828,29 +2828,22 @@
     });
 
     /* ── ElCom Tariff Auto-Detection ── */
-    const ELCOM_BUILD = '2.38.8-94e2e23'; // ElCom Next.js build ID
+    // CORS proxy fallbacks (needed when running from file:// or if ElCom doesn't allow origin)
+    const CORS_PROXIES = [
+      url => url, // try direct first
+      url => 'https://corsproxy.io/?' + encodeURIComponent(url),
+      url => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url)
+    ];
 
-    // CORS proxy for ElCom API (needed when running from file:// or localhost)
-    const CORS_PROXY = 'https://corsproxy.io/?url=';
-    async function corsFetch(url) {
-      try {
-        const r = await fetch(url);
-        if (!r.ok) throw new Error(r.status);
-        return r;
-      } catch (e) {
-        return fetch(CORS_PROXY + encodeURIComponent(url));
-      }
-    }
     async function corsPost(url, body) {
       const opts = { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) };
-      try {
-        const r = await fetch(url, opts);
-        if (!r.ok) throw new Error(r.status);
-        return await r.json();
-      } catch (e) {
-        const r = await fetch(CORS_PROXY + encodeURIComponent(url), opts);
-        return await r.json();
+      for (const proxy of CORS_PROXIES) {
+        try {
+          const r = await fetch(proxy(url), opts);
+          if (r.ok) return await r.json();
+        } catch (e) { /* try next proxy */ }
       }
+      throw new Error('All CORS proxies failed');
     }
 
     // Map ElCom operator names → our TARIFE keys
@@ -2865,15 +2858,29 @@
       const info = document.getElementById('tariffInfo');
       info.classList.remove('visible');
       try {
-        // Step 1: Get operator from municipality (via CORS proxy)
-        const muniUrl = `https://www.strompreis.elcom.admin.ch/_next/data/${ELCOM_BUILD}/de/municipality/${bfsNr}.json?id=${bfsNr}`;
-        const muniRes = await corsFetch(muniUrl);
-        const muniData = await muniRes.json();
-        const pp = muniData.pageProps;
-        if (!pp || pp.status !== 'found' || !pp.operators || !pp.operators.length) return;
-        const operatorName = pp.operators[0].name;
+        // Single GraphQL call → returns operator name + tariff data (no build ID dependency!)
+        const gqlUrl = 'https://www.strompreis.elcom.admin.ch/api/graphql';
+        const gqlBody = {
+          operationName: 'ObservationsWithAllPriceComponents',
+          variables: {
+            filters: { category: ['H4'], municipality: [String(bfsNr)], period: ['2026'], product: ['standard'] },
+            locale: 'de',
+            observationKind: 'Municipality'
+          },
+          query: `query ObservationsWithAllPriceComponents($filters: ObservationFilterInput!, $locale: String!, $observationKind: ObservationKind!) {
+            observations(filters: $filters, observationKind: $observationKind, locale: $locale) {
+              municipality operator period category product energy gridusage charge aidfee total fixcosts fixcostTotal
+            }
+          }`
+        };
+        const gqlData = await corsPost(gqlUrl, gqlBody);
+        const obs = gqlData?.data?.observations;
+        if (!obs || !obs.length) return;
 
-        // Step 2: Auto-select matching Stromlieferant in dropdown
+        const t = obs[0];
+        const operatorName = t.operator || 'Unbekannt';
+
+        // Auto-select matching Stromlieferant in dropdown
         const opLower = operatorName.toLowerCase();
         let matched = null;
         for (const [key, val] of Object.entries(OPERATOR_MAP)) {
@@ -2881,70 +2888,49 @@
         }
         if (matched) {
           tariffAutoDetected = true;
-          const sel = document.getElementById('lieferant');
-          sel.value = matched;
+          document.getElementById('lieferant').value = matched;
           onLieferantChange();
-          // Keep dropdowns collapsed
           document.getElementById('tariffFields').classList.remove('open');
           document.getElementById('tariffToggle').classList.remove('open');
         } else {
           tariffAutoDetected = false;
-          // Unknown operator — expand dropdowns so user can pick manually
           document.getElementById('tariffFields').classList.add('open');
           document.getElementById('tariffToggle').classList.add('open');
           document.getElementById('tb-auto').textContent = '';
         }
 
-        // Step 3: Show operator info
-        document.getElementById('tariffTitle').textContent = `⚡ ${operatorName}`;
-        document.getElementById('tariffGrid').innerHTML = '';
-        if (matched) {
-          document.getElementById('tariffDetail').textContent = `Stromlieferant automatisch erkannt und ausgewählt.`;
-        } else {
-          document.getElementById('tariffDetail').textContent = `Netzbetreiber erkannt — bitte Tarif manuell auswählen ↑`;
-        }
+        // Show tariff breakdown
+        document.getElementById('tariffTitle').textContent = `⚡ ${operatorName} — Stromtarif 2026`;
+        document.getElementById('tariffGrid').innerHTML = `
+          <span>Energie:</span><span class="tg-val">${Number(t.energy).toFixed(2)} Rp/kWh</span>
+          <span>Netznutzung:</span><span class="tg-val">${Number(t.gridusage).toFixed(2)} Rp/kWh</span>
+          <span>Abgaben:</span><span class="tg-val">${Number(t.charge).toFixed(2)} Rp/kWh</span>
+          <span>KEV/Reserve:</span><span class="tg-val">${Number(t.aidfee).toFixed(2)} Rp/kWh</span>
+          <span style="font-weight:700">Total:</span><span class="tg-val" style="color:var(--brand-cyan-dark)">${Number(t.total).toFixed(2)} Rp/kWh</span>
+        `;
+        document.getElementById('tariffDetail').textContent = matched
+          ? `Kat. H4 (5-Zi-Whg, 4'500 kWh/J) · Quelle: ElCom`
+          : `Netzbetreiber erkannt — bitte Tarif manuell auswählen ↑`;
         info.classList.add('visible');
 
-        // Step 4: Try to enrich with live ElCom tariff data (works when hosted, skipped from file://)
-        try {
-          const gqlUrl = 'https://www.strompreis.elcom.admin.ch/api/graphql';
-          const gqlBody = {
-            operationName: 'ObservationsWithAllPriceComponents',
-            variables: {
-              filters: { category: ['H4'], municipality: [bfsNr], period: ['2026'], product: ['standard'] },
-              locale: 'de',
-              observationKind: 'Municipality'
-            },
-            query: `query ObservationsWithAllPriceComponents($filters: ObservationFilterInput!, $locale: String!, $observationKind: ObservationKind!) {
-              observations(filters: $filters, observationKind: $observationKind, locale: $locale) {
-                municipality operator period category product energy gridusage charge aidfee total fixcosts fixcostTotal
-              }
-            }`
-          };
-          const gqlData = await corsPost(gqlUrl, gqlBody);
-          const obs = gqlData?.data?.observations;
-          if (obs && obs.length) {
-            const t = obs[0];
-            document.getElementById('tariffTitle').textContent = `⚡ ${operatorName} — Stromtarif 2026`;
-            document.getElementById('tariffGrid').innerHTML = `
-              <span>Energie:</span><span class="tg-val">${Number(t.energy).toFixed(2)} Rp/kWh</span>
-              <span>Netznutzung:</span><span class="tg-val">${Number(t.gridusage).toFixed(2)} Rp/kWh</span>
-              <span>Abgaben:</span><span class="tg-val">${Number(t.charge).toFixed(2)} Rp/kWh</span>
-              <span>KEV/Reserve:</span><span class="tg-val">${Number(t.aidfee).toFixed(2)} Rp/kWh</span>
-              <span style="font-weight:700">Total:</span><span class="tg-val" style="color:var(--brand-cyan-dark)">${Number(t.total).toFixed(2)} Rp/kWh</span>
-            `;
-            document.getElementById('tariffDetail').textContent = `Kat. H4 (5-Zi-Whg, 4'500 kWh/J) · Quelle: ElCom strompreis.admin.ch`;
-            // Auto-update with live data
-            const totalRp = Number(t.total);
-            if (totalRp > 0) {
-              T.sp = totalRp;
-              T.zt = Math.round(totalRp * 0.8 * 100) / 100;
-              document.getElementById('ti-sp').textContent = T.sp.toFixed(2) + ' Rp/kWh';
-              document.getElementById('ti-zt').textContent = T.zt.toFixed(2) + ' Rp/kWh';
-              calc();
-            }
-          }
-        } catch (gqlErr) { /* GraphQL enrichment optional — silently skip */ }
+        // Apply live tariff to calculator
+        const totalRp = Number(t.total);
+        const energyRp = Number(t.energy);
+        if (totalRp > 0) {
+          tariffAutoDetected = true;
+          T.sp = totalRp;
+          T.ev = Math.max(energyRp * 0.4, 6); // Einspeisevergütung: ~40% of energy component, min 6 Rp (2026 law)
+          T.zt = Math.round(totalRp * 0.8 * 100) / 100; // ZEV tariff = 80% of total
+          T.name = operatorName + ' H4';
+          document.getElementById('tb-tarif').textContent = T.name;
+          document.getElementById('tb-auto').textContent = '(automatisch)';
+          document.getElementById('ti-sp').textContent = T.sp.toFixed(2) + ' Rp/kWh';
+          document.getElementById('ti-ev').textContent = T.ev.toFixed(2) + ' Rp/kWh';
+          document.getElementById('ti-zt').textContent = T.zt.toFixed(2) + ' Rp/kWh';
+          document.getElementById('no-ev-label').textContent = T.ev.toFixed(2);
+          document.getElementById('zev-zt-label').textContent = T.zt.toFixed(2);
+          calc();
+        }
       } catch (e) {
         console.warn('ElCom tariff fetch failed:', e);
       }

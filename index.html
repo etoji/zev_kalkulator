@@ -2824,11 +2824,15 @@
           document.getElementById('solarLabel').textContent = 'Für diese Adresse liegen keine Solardaten vor.';
           return;
         }
-        // Filter: only roofs with klasse >= 2 (Mittel+), group by building_id
+        // Filter: only roofs with klasse >= 3 (Gut/Sehr gut), group by building_id
         const buildings = {};
+        let totalSurfaces = 0;
         data.results.forEach(r => {
           const a = r.attributes;
           if (!a.gwr_egid) return;
+          totalSurfaces++;
+          // Skip poorly-suited surfaces (balconies, walls, poor orientation)
+          if (a.klasse < 3) return;
           if (!buildings[a.gwr_egid]) buildings[a.gwr_egid] = { total: 0, flaeche: 0, best: 0, count: 0 };
           buildings[a.gwr_egid].total += (a.stromertrag || 0);
           buildings[a.gwr_egid].flaeche += (a.flaeche || 0);
@@ -2846,8 +2850,9 @@
           info.classList.add('visible');
           document.getElementById('solarVal').textContent = f(bestTotal) + ' kWh/Jahr';
           const klassen = ['', 'Gering', 'Mittel', 'Gut', 'Sehr gut'];
+          const skipped = totalSurfaces - b.count;
           document.getElementById('solarLabel').textContent =
-            `Solarpotential (${b.count} Dachflächen, ${f(Math.round(b.flaeche))} m², Eignung: ${klassen[b.best] || '?'}) — Quelle: sonnendach.ch`;
+            `Solarpotential (${b.count} von ${totalSurfaces} Dachfl., ${f(Math.round(b.flaeche))} m\u00B2, Eignung: ${klassen[b.best] || '?'}) \u2014 Quelle: sonnendach.ch`;
           // Auto-fill kWp
           document.getElementById('kwp').value = kwp;
           syncKwp();

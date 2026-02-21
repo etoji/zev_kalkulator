@@ -496,6 +496,91 @@
       pointer-events: none;
     }
 
+    .tb-live {
+      width: 7px;
+      height: 7px;
+      background: var(--positive);
+      border-radius: 50%;
+      display: inline-block;
+      animation: pulse 2s infinite;
+    }
+
+    /* Address autocomplete */
+    .addr-wrap {
+      position: relative;
+    }
+
+    .addr-dropdown {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 100%;
+      background: var(--white);
+      border: 1px solid var(--alabaster);
+      border-radius: 0 0 8px 8px;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, .12);
+      z-index: 200;
+      max-height: 180px;
+      overflow-y: auto;
+      display: none;
+    }
+
+    .addr-dropdown.open {
+      display: block;
+    }
+
+    .addr-item {
+      padding: 7px 10px;
+      font-size: 11px;
+      cursor: pointer;
+      border-bottom: 1px solid var(--alabaster-light);
+      color: var(--charcoal);
+    }
+
+    .addr-item:hover {
+      background: var(--alabaster-light);
+    }
+
+    .addr-item:last-child {
+      border-bottom: none;
+    }
+
+    .addr-item b {
+      color: var(--brand-cyan-dark);
+    }
+
+    .solar-info {
+      margin-top: 6px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #e8f5e9, #f1f8e9);
+      font-size: 10px;
+      color: var(--charcoal-dark);
+      display: none;
+    }
+
+    .solar-info.visible {
+      display: block;
+    }
+
+    .solar-info .solar-val {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--positive);
+    }
+
+    .solar-info .solar-label {
+      opacity: .7;
+      margin-top: 2px;
+    }
+
+    .solar-loading {
+      font-size: 10px;
+      color: var(--brand-cyan-dark);
+      padding: 4px 0;
+      display: none;
+    }
+
     .split-track-fill {
       position: absolute;
       top: 0;
@@ -1713,10 +1798,14 @@
         <div class="sb-heading">Stromtarif</div>
 
         <div class="field">
-          <div class="field-label">Stromlieferant</div>
+          <div class="field-label">Stromlieferant
+            <span class="tip" data-tip="Wählen Sie Ihren regionalen Energieversorger. Tarife Stand 2026.">?</span>
+          </div>
           <div class="ctrl"><select id="lieferant" onchange="onLieferantChange()">
               <option value="ewb">EWB (Energie Wasser Bern)</option>
-              <option value="bkw">BKW Energy Grey</option>
+              <option value="bkw">BKW Energie</option>
+              <option value="ckw">CKW (Centralschweizerische Kraftwerke)</option>
+              <option value="iwb">IWB (Industrielle Werke Basel)</option>
             </select></div>
         </div>
 
@@ -1725,6 +1814,39 @@
           <div class="ctrl"><select id="stromtarif" onchange="onTarifChange()">
               <option value="ewb_basis">ewb.basis.STROM</option>
             </select></div>
+        </div>
+      </div>
+
+      <div class="sb-section">
+        <div class="sb-heading">Objekt & Kontakt</div>
+
+        <div class="field">
+          <div class="field-label">Objektbezeichnung
+            <span class="tip"
+              data-tip="Schweizer Adresse eingeben — Solarpotential wird automatisch von sonnendach.ch abgerufen">?</span>
+          </div>
+          <div class="addr-wrap">
+            <div class="ctrl">
+              <input type="text" id="objektName" placeholder="Adresse eingeben…"
+                style="font-family:'Manrope',sans-serif;" autocomplete="off" oninput="onAddressInput(this.value)">
+            </div>
+            <div class="addr-dropdown" id="addrDropdown"></div>
+          </div>
+          <div class="solar-loading" id="solarLoading">☀️ Solarpotential wird abgerufen…</div>
+          <div class="solar-info" id="solarInfo">
+            <div class="solar-val" id="solarVal"></div>
+            <div class="solar-label" id="solarLabel"></div>
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="field-label">E-Mail für Bericht
+            <span class="tip" data-tip="Für den späteren Versand einer Zusammenfassung / eines Berichts">?</span>
+          </div>
+          <div class="ctrl">
+            <input type="email" id="kontaktEmail" placeholder="name@beispiel.ch"
+              style="font-family:'Manrope',sans-serif;">
+          </div>
         </div>
       </div>
 
@@ -1751,10 +1873,10 @@
 
         <div class="field">
           <div class="field-label">Jahresproduktion
-            <span class="tip" data-tip="Richtwert: 1 kWp ≈ 1000 kWh/Jahr in der Schweiz">?</span>
+            <span class="tip" data-tip="Automatisch berechnet: 1 kWp × 1000 kWh/Jahr (Schweizer Richtwert)">?</span>
           </div>
-          <div class="ctrl">
-            <input type="number" id="produktion" value="31020" oninput="calc()">
+          <div class="ctrl" style="background:var(--alabaster-light); opacity:.85;">
+            <input type="number" id="produktion" value="31020" readonly style="cursor:default; color:var(--charcoal);">
             <span class="ctrl-unit">kWh/J</span>
           </div>
         </div>
@@ -1837,7 +1959,7 @@
           <div class="split-range-track">
             <div class="split-track-fill" id="track-fill" style="left:0%; right:0%"></div>
           </div>
-          <input type="range" id="sl-split" min="0" max="80" value="60" step="1" oninput="onSplitSlider()">
+          <input type="range" id="sl-split" min="0" max="80" value="33" step="1" oninput="onSplitSlider()">
         </div>
 
         <!-- Pct chips -->
@@ -1847,11 +1969,11 @@
             <span class="pc-label">Eigenverbrauch</span>
           </div>
           <div class="pct-chip pc-zev">
-            <span id="pct-zev-val">60%</span>
+            <span id="pct-zev-val">33%</span>
             <span class="pc-label">ZEV Mieter</span>
           </div>
           <div class="pct-chip pc-einspeis">
-            <span id="pct-einspeis-val">20%</span>
+            <span id="pct-einspeis-val">47%</span>
             <span class="pc-label">Einspeisung</span>
           </div>
         </div>
@@ -2390,12 +2512,22 @@
     const TARIFE = {
       ewb: {
         tarife: {
-          ewb_basis: { name: 'ewb.basis.STROM', sp: 33.48, ev: 10.96, zt: 26.78, zm: 8.43 }
+          ewb_basis: { name: 'ewb.basis.STROM', sp: 33.06, ev: 10.96, zt: 26.45, zm: 7.00 }
         }
       },
       bkw: {
         tarife: {
-          bkw_grey: { name: 'BKW Energy Grey', sp: 22.10, ev: 9.00, zt: 17.68, zm: 18.91 }
+          bkw_grund: { name: 'BKW Grundversorgung', sp: 27.70, ev: 9.00, zt: 22.16, zm: 6.58 }
+        }
+      },
+      ckw: {
+        tarife: {
+          ckw_haushalt: { name: 'CKW Haushalt', sp: 25.20, ev: 8.00, zt: 20.16, zm: 6.50 }
+        }
+      },
+      iwb: {
+        tarife: {
+          iwb_basis: { name: 'IWB Basistarif', sp: 37.91, ev: 12.00, zt: 30.33, zm: 4.86 }
         }
       }
     };
@@ -2440,7 +2572,13 @@
     }
 
     function onSplitSlider() {
-      const zev = +document.getElementById('sl-split').value;
+      let zev = +document.getElementById('sl-split').value;
+      // Max. 1/3 der Produktion darf per ZEV verteilt werden
+      const MAX_ZEV = 33;
+      if (zev > MAX_ZEV) {
+        zev = MAX_ZEV;
+        document.getElementById('sl-split').value = MAX_ZEV;
+      }
       const ei = 80 - zev;
 
       // Update bar widths (out of 100%)
@@ -2463,6 +2601,113 @@
 
       calc();
     }
+
+    /* ── GeoAdmin Address Autocomplete ── */
+    let addrTimer = null;
+    let selectedCoords = null;
+
+    function onAddressInput(q) {
+      clearTimeout(addrTimer);
+      const dd = document.getElementById('addrDropdown');
+      if (q.length < 3) { dd.classList.remove('open'); return; }
+      addrTimer = setTimeout(() => fetchAddresses(q), 300);
+    }
+
+    async function fetchAddresses(q) {
+      const dd = document.getElementById('addrDropdown');
+      try {
+        const url = `https://api3.geo.admin.ch/rest/services/api/SearchServer?searchText=${encodeURIComponent(q)}&type=locations&origins=address&sr=2056&limit=5`;
+        const r = await fetch(url);
+        const data = await r.json();
+        dd.innerHTML = '';
+        if (data.results && data.results.length) {
+          data.results.forEach(res => {
+            const div = document.createElement('div');
+            div.className = 'addr-item';
+            div.innerHTML = res.attrs.label;
+            div.addEventListener('click', () => onAddressSelect(res));
+            dd.appendChild(div);
+          });
+          dd.classList.add('open');
+        } else {
+          dd.classList.remove('open');
+        }
+      } catch (e) { dd.classList.remove('open'); }
+    }
+
+    function onAddressSelect(res) {
+      const dd = document.getElementById('addrDropdown');
+      dd.classList.remove('open');
+      // Strip HTML from label
+      const tmp = document.createElement('span');
+      tmp.innerHTML = res.attrs.label;
+      document.getElementById('objektName').value = tmp.textContent;
+      selectedCoords = { x: res.attrs.y, y: res.attrs.x }; // GeoAdmin: y=easting, x=northing
+      fetchSolarPotential(selectedCoords.x, selectedCoords.y);
+    }
+
+    async function fetchSolarPotential(x, y) {
+      const loading = document.getElementById('solarLoading');
+      const info = document.getElementById('solarInfo');
+      loading.style.display = 'block';
+      info.classList.remove('visible');
+      try {
+        const url = `https://api3.geo.admin.ch/rest/services/api/MapServer/identify?geometryType=esriGeometryPoint&geometry=${x},${y}&mapExtent=${x - 50},${y - 50},${x + 50},${y + 50}&imageDisplay=100,100,96&layers=all:ch.bfe.solarenergie-eignung-daecher&tolerance=10&sr=2056&returnGeometry=false&lang=de`;
+        const r = await fetch(url);
+        const data = await r.json();
+        loading.style.display = 'none';
+        if (!data.results || !data.results.length) {
+          info.classList.add('visible');
+          document.getElementById('solarVal').textContent = 'Keine Daten';
+          document.getElementById('solarLabel').textContent = 'Für diese Adresse liegen keine Solardaten vor.';
+          return;
+        }
+        // Filter: only roofs with klasse >= 2 (Mittel+), group by building_id
+        const buildings = {};
+        data.results.forEach(r => {
+          const a = r.attributes;
+          if (!a.gwr_egid) return;
+          if (!buildings[a.gwr_egid]) buildings[a.gwr_egid] = { total: 0, flaeche: 0, best: 0, count: 0 };
+          buildings[a.gwr_egid].total += (a.stromertrag || 0);
+          buildings[a.gwr_egid].flaeche += (a.flaeche || 0);
+          buildings[a.gwr_egid].count++;
+          if (a.klasse > buildings[a.gwr_egid].best) buildings[a.gwr_egid].best = a.klasse;
+        });
+        // Pick the building with the most total potential
+        let bestEgid = null, bestTotal = 0;
+        Object.entries(buildings).forEach(([egid, b]) => {
+          if (b.total > bestTotal) { bestTotal = b.total; bestEgid = egid; }
+        });
+        if (bestEgid && bestTotal > 0) {
+          const b = buildings[bestEgid];
+          const kwp = Math.round(bestTotal / 1000 * 10) / 10;
+          info.classList.add('visible');
+          document.getElementById('solarVal').textContent = f(bestTotal) + ' kWh/Jahr';
+          const klassen = ['', 'Gering', 'Mittel', 'Gut', 'Sehr gut'];
+          document.getElementById('solarLabel').textContent =
+            `Solarpotential (${b.count} Dachflächen, ${f(Math.round(b.flaeche))} m², Eignung: ${klassen[b.best] || '?'}) — Quelle: sonnendach.ch`;
+          // Auto-fill kWp
+          document.getElementById('kwp').value = kwp;
+          syncKwp();
+        } else {
+          info.classList.add('visible');
+          document.getElementById('solarVal').textContent = 'Keine nutzbaren Dachflächen';
+          document.getElementById('solarLabel').textContent = 'Das Gebäude hat kein verwertbares Solarpotential.';
+        }
+      } catch (e) {
+        loading.style.display = 'none';
+        info.classList.add('visible');
+        document.getElementById('solarVal').textContent = 'Fehler';
+        document.getElementById('solarLabel').textContent = 'Solardaten konnten nicht abgerufen werden.';
+      }
+    }
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.addr-wrap')) {
+        document.getElementById('addrDropdown').classList.remove('open');
+      }
+    });
 
     function f(v, dec = 0) {
       return v.toLocaleString('de-CH', { minimumFractionDigits: dec, maximumFractionDigits: dec });

@@ -2633,13 +2633,69 @@
       calc();
     }
 
-    // Show operator-only info (when we know operator but not detailed tariffs)
+    // Show operator-only info (fallback: match against hardcoded TARIFE, or use Swiss avg)
+    const OPERATOR_MAP = {
+      'energie wasser bern': 'ewb',
+      'bkw energie': 'bkw', 'bkw': 'bkw',
+      'centralschweizerische kraftwerke': 'ckw', 'ckw ag': 'ckw',
+      'industrielle werke basel': 'iwb', 'iwb': 'iwb'
+    };
+
     function applyOperatorOnly(operatorName) {
       const info = document.getElementById('tariffInfo');
-      document.getElementById('tariffTitle').textContent = `⚡ ${operatorName}`;
-      document.getElementById('tariffGrid').innerHTML = '';
-      document.getElementById('tariffDetail').textContent = 'Tarif wird geladen oder nicht verfügbar.';
+      const opLower = operatorName.toLowerCase();
+
+      // Try to match operator to our hardcoded TARIFE
+      let matched = null;
+      for (const [key, val] of Object.entries(OPERATOR_MAP)) {
+        if (opLower.includes(key)) { matched = val; break; }
+      }
+
+      if (matched) {
+        // Known operator — use hardcoded tariff data
+        const firstTarif = Object.values(TARIFE[matched].tarife)[0];
+        T.sp = firstTarif.sp;
+        T.ev = firstTarif.ev;
+        T.zt = firstTarif.zt;
+        T.zm = firstTarif.zm;
+        T.name = firstTarif.name;
+        document.getElementById('tariffTitle').textContent = `⚡ ${operatorName} — ${T.name}`;
+        document.getElementById('tariffGrid').innerHTML = `
+          <span style="font-weight:700">Strompreis (Bezug):</span><span class="tg-val" style="color:var(--brand-cyan-dark)">${T.sp.toFixed(2)} Rp/kWh</span>
+          <span>Einspeisevergütung:</span><span class="tg-val">${T.ev.toFixed(2)} Rp/kWh</span>
+          <span>ZEV-Tarif (80%):</span><span class="tg-val">${T.zt.toFixed(2)} Rp/kWh</span>
+        `;
+        document.getElementById('tariffDetail').textContent = 'Tarif aus hinterlegten Daten · Stand 2026';
+      } else {
+        // Unknown operator — use Swiss average values (ElCom Median H4 2026)
+        T.sp = 32.14;
+        T.ev = 9.50;
+        T.zt = 25.71;
+        T.zm = 5.00;
+        T.name = operatorName + ' (Ø CH)';
+        document.getElementById('tariffTitle').textContent = `⚡ ${operatorName}`;
+        document.getElementById('tariffGrid').innerHTML = `
+          <span style="font-weight:700">Strompreis (Bezug):</span><span class="tg-val" style="color:var(--brand-cyan-dark)">${T.sp.toFixed(2)} Rp/kWh</span>
+          <span>Einspeisevergütung:</span><span class="tg-val">${T.ev.toFixed(2)} Rp/kWh</span>
+          <span>ZEV-Tarif (80%):</span><span class="tg-val">${T.zt.toFixed(2)} Rp/kWh</span>
+        `;
+        document.getElementById('tariffDetail').textContent = 'Schweizer Durchschnittstarif H4 · bitte ggf. anpassen';
+      }
+
+      // Update top-bar
+      document.getElementById('tb-tarif').textContent = T.name;
+      document.getElementById('tb-auto').textContent = matched ? '(automatisch)' : '(Durchschnitt)';
+
+      // Update sidebar tariff display
+      document.getElementById('ti-sp').textContent = T.sp.toFixed(2) + ' Rp/kWh';
+      document.getElementById('ti-ev').textContent = T.ev.toFixed(2) + ' Rp/kWh';
+      document.getElementById('ti-zt').textContent = T.zt.toFixed(2) + ' Rp/kWh';
+      document.getElementById('ti-zm').textContent = T.zm.toFixed(2) + ' CHF';
+      document.getElementById('no-ev-label').textContent = T.ev.toFixed(2);
+      document.getElementById('zev-zt-label').textContent = T.zt.toFixed(2);
+
       info.classList.add('visible');
+      calc();
     }
 
     function syncKwp() {
@@ -2875,8 +2931,6 @@
             if (pp?.operators?.length) {
               const operatorName = pp.operators[0].name;
               applyOperatorOnly(operatorName);
-              document.getElementById('tb-tarif').textContent = operatorName;
-              document.getElementById('tb-auto').textContent = '(erkannt)';
               return;
             }
           }

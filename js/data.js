@@ -1,29 +1,83 @@
+// ══════════════════════════════════════════════════════════════════
+// ZEV Kalkulator — Statische Tarifdaten (Stand: 2026)
+// ══════════════════════════════════════════════════════════════════
+// Quellen:
+//   Bezugstarife (sp): ElCom Kat. H4 (5-Zi-Whg, 4'500 kWh/J)
+//   Einspeisevergütung (ev): Offizielle Rückliefertarife der Netzbetreiber
+//   ZEV-Tarif (zt): 80% des Bezugstarifs (gesetzl. Maximum gemäss StromVG)
+//   Zählermiete (zm): Netzbetreiber-Angaben (monatlich)
+//
+// ev_quelle: Kennzeichnung der Datenquelle für die Einspeisevergütung
+//   "offiziell" = direkt von der Webseite des Netzbetreibers
+//   "geschätzt" = abgeleitet oder Durchschnittswert
+//
+// Aktualisierung: Jährlich im September/Oktober, wenn ElCom neue Tarife publiziert
+// ══════════════════════════════════════════════════════════════════
+
 const TARIFE = {
     ewb: {
         tarife: {
-            ewb_basis: { name: 'ewb.basis.STROM', sp: 33.06, ev: 10.96, zt: 26.45, zm: 7.00 }
+            ewb_basis: {
+                name: 'EWB Grundversorgung',
+                sp: 33.06,         // ElCom H4 2026
+                ev: 10.96,         // Quelle: ewb.ch — Rückliefertarif ≤100 kW inkl. HKN
+                ev_quelle: 'offiziell',
+                zt: 26.45,         // 80% von 33.06
+                zm: 7.00
+            }
         }
     },
     bkw: {
         tarife: {
-            bkw_grund: { name: 'BKW Grundversorgung', sp: 27.70, ev: 9.00, zt: 22.16, zm: 6.58 }
+            bkw_grund: {
+                name: 'BKW Grundversorgung',
+                sp: 27.70,         // ElCom H4 2026
+                ev: 6.00,          // Quelle: bkw.ch — Mindestvergütung ≤30 kW (marktbasiert, Minimum)
+                ev_quelle: 'offiziell',
+                zt: 22.16,         // 80% von 27.70
+                zm: 6.58
+            }
         }
     },
     ckw: {
         tarife: {
-            ckw_haushalt: { name: 'CKW Haushalt', sp: 25.20, ev: 8.00, zt: 20.16, zm: 6.50 }
+            ckw_haushalt: {
+                name: 'CKW Haushalt',
+                sp: 25.20,         // ElCom H4 2026
+                ev: 8.00,          // Quelle: ckw.ch — 6 Rp/kWh Minimum + 2 Rp/kWh HKN
+                ev_quelle: 'offiziell',
+                zt: 20.16,         // 80% von 25.20
+                zm: 6.50
+            }
         }
     },
     iwb: {
         tarife: {
-            iwb_basis: { name: 'IWB Basistarif', sp: 37.91, ev: 12.00, zt: 30.33, zm: 4.86 }
+            iwb_basis: {
+                name: 'IWB Basistarif',
+                sp: 37.91,         // ElCom H4 2026
+                ev: 12.00,         // Quelle: iwb.ch — marktbasiert (Schätzung basierend auf 2025-Niveau)
+                ev_quelle: 'geschätzt',
+                zt: 30.33,         // 80% von 37.91
+                zm: 4.86
+            }
         }
     }
 };
 
+// Mapping von Netzbetreibernamen (lowercase) auf TARIFE-Schlüssel
 const OPERATOR_MAP = {
     'energie wasser bern': 'ewb',
     'bkw energie': 'bkw', 'bkw': 'bkw',
     'centralschweizerische kraftwerke': 'ckw', 'ckw ag': 'ckw',
     'industrielle werke basel': 'iwb', 'iwb': 'iwb'
+};
+
+// Schweizer Durchschnittswerte (ElCom Median H4 2026)
+const CH_DURCHSCHNITT = {
+    sp: 32.14,
+    ev: 9.60,           // Prognose 2026: schweizweiter Durchschnitt (geschätzt, -25% ggü. 2025)
+    ev_quelle: 'geschätzt',
+    zt: 25.71,
+    zm: 5.00
 };

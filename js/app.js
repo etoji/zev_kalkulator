@@ -1,4 +1,4 @@
-﻿let T = TARIFE.ewb.tarife.ewb_basis;
+﻿let T = { ...TARIFE.ewb.tarife.ewb_basis };
 const tog = { wp: 'nein', em: 'nein', ma: 'nein', zv: 'nein' };
 
 function setToggle(k, v) {
@@ -36,10 +36,14 @@ function onRoofSlider() {
 
 // Apply tariff data to the calculator and UI
 function applyTariff(operatorName, totalRp, energyRp, gridusageRp, chargeRp, aidfeeRp) {
-  T.sp = totalRp;
-  T.ev = Math.max(energyRp * 0.4, 6); // Einspeisevergütung: min 6 Rp/kWh (2026)
-  T.zt = Math.round(totalRp * 0.8 * 100) / 100; // ZEV = 80% des Netzpreises
-  T.name = operatorName + ' H4';
+  T = {
+    sp: totalRp,
+    ev: Math.max(energyRp * 0.4, 6), // Einspeisevergütung: min 6 Rp/kWh (2026)
+    zt: Math.round(totalRp * 0.8 * 100) / 100, // ZEV = 80% des Netzpreises
+    zm: T.zm || 5.00,
+    name: operatorName + ' H4',
+    ev_quelle: 'geschätzt' // ElCom liefert keine Einspeisevergütung; Formel: 40% Energiepreis
+  };
   // Top-bar
   document.getElementById('tb-tarif').textContent = T.name;
   document.getElementById('tb-auto').textContent = '(automatisch)';
@@ -58,8 +62,9 @@ function applyTariff(operatorName, totalRp, energyRp, gridusageRp, chargeRp, aid
         <span>Abgaben:</span><span class="tg-val">${chargeRp.toFixed(2)} Rp/kWh</span>
         <span>KEV/Reserve:</span><span class="tg-val">${aidfeeRp.toFixed(2)} Rp/kWh</span>
         <span style="font-weight:700">Total:</span><span class="tg-val" style="color:var(--brand-cyan-dark)">${totalRp.toFixed(2)} Rp/kWh</span>
+        <span>Einspeiseverg\u00FCtung:</span><span class="tg-val">${T.ev.toFixed(2)} Rp/kWh <em style="font-size:9px;color:var(--muted)">(gesch\u00E4tzt)</em></span>
       `;
-  document.getElementById('tariffDetail').textContent = 'Kat. H4 (5-Zi-Whg, 4\'500 kWh/J) \u00B7 Quelle: ElCom';
+  document.getElementById('tariffDetail').textContent = 'Kat. H4 (5-Zi-Whg, 4\'500 kWh/J) \u00B7 Quelle: ElCom \u00B7 Einspeisung gesch\u00E4tzt';
   info.classList.add('visible');
   // Hide loading
   document.getElementById('tariffLoading').style.display = 'none';
@@ -79,31 +84,31 @@ function applyOperatorOnly(operatorName) {
   }
 
   if (matched) {
-    // Known operator — use hardcoded tariff data
-    const firstTarif = Object.values(TARIFE[matched].tarife)[0];
-    T.sp = firstTarif.sp;
-    T.ev = firstTarif.ev;
-    T.zt = firstTarif.zt;
-    T.zm = firstTarif.zm;
-    T.name = firstTarif.name;
+    // Known operator — use hardcoded tariff data (create a COPY to avoid mutating TARIFE)
+    const src = Object.values(TARIFE[matched].tarife)[0];
+    T = { ...src };
+    const evLabel = T.ev_quelle === 'offiziell' ? 'offiziell' : 'gesch\u00E4tzt';
     document.getElementById('tariffTitle').textContent = `\u26A1 ${operatorName} \u2014 ${T.name}`;
     document.getElementById('tariffGrid').innerHTML = `
           <span style="font-weight:700">Strompreis (Bezug):</span><span class="tg-val" style="color:var(--brand-cyan-dark)">${T.sp.toFixed(2)} Rp/kWh</span>
-          <span>Einspeiseverg\u00FCtung:</span><span class="tg-val">${T.ev.toFixed(2)} Rp/kWh</span>
+          <span>Einspeiseverg\u00FCtung:</span><span class="tg-val">${T.ev.toFixed(2)} Rp/kWh <em style="font-size:9px;color:var(--muted)">(${evLabel})</em></span>
           <span>ZEV-Tarif (80%):</span><span class="tg-val">${T.zt.toFixed(2)} Rp/kWh</span>
         `;
     document.getElementById('tariffDetail').textContent = 'Tarif aus hinterlegten Daten \u00B7 Stand 2026';
   } else {
-    // Unknown operator — use Swiss average values (ElCom Median H4 2026)
-    T.sp = 32.14;
-    T.ev = 9.50;
-    T.zt = 25.71;
-    T.zm = 5.00;
-    T.name = operatorName + ' (\u00D8 CH)';
+    // Unknown operator — use Swiss average values
+    T = {
+      sp: CH_DURCHSCHNITT.sp,
+      ev: CH_DURCHSCHNITT.ev,
+      zt: CH_DURCHSCHNITT.zt,
+      zm: CH_DURCHSCHNITT.zm,
+      name: operatorName + ' (\u00D8 CH)',
+      ev_quelle: 'gesch\u00E4tzt'
+    };
     document.getElementById('tariffTitle').textContent = `\u26A1 ${operatorName}`;
     document.getElementById('tariffGrid').innerHTML = `
           <span style="font-weight:700">Strompreis (Bezug):</span><span class="tg-val" style="color:var(--brand-cyan-dark)">${T.sp.toFixed(2)} Rp/kWh</span>
-          <span>Einspeiseverg\u00FCtung:</span><span class="tg-val">${T.ev.toFixed(2)} Rp/kWh</span>
+          <span>Einspeiseverg\u00FCtung:</span><span class="tg-val">${T.ev.toFixed(2)} Rp/kWh <em style="font-size:9px;color:var(--muted)">(gesch\u00E4tzt)</em></span>
           <span>ZEV-Tarif (80%):</span><span class="tg-val">${T.zt.toFixed(2)} Rp/kWh</span>
         `;
     document.getElementById('tariffDetail').textContent = 'Schweizer Durchschnittstarif H4 \u00B7 bitte ggf. anpassen';

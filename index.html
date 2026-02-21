@@ -2880,57 +2880,52 @@
         const t = obs[0];
         const operatorName = t.operator || 'Unbekannt';
 
-        // Auto-select matching Stromlieferant in dropdown
+        // Optionally match to our dropdown (cosmetic only)
         const opLower = operatorName.toLowerCase();
-        let matched = null;
         for (const [key, val] of Object.entries(OPERATOR_MAP)) {
-          if (opLower.includes(key)) { matched = val; break; }
-        }
-        if (matched) {
-          tariffAutoDetected = true;
-          document.getElementById('lieferant').value = matched;
-          onLieferantChange();
-          document.getElementById('tariffFields').classList.remove('open');
-          document.getElementById('tariffToggle').classList.remove('open');
-        } else {
-          tariffAutoDetected = false;
-          document.getElementById('tariffFields').classList.add('open');
-          document.getElementById('tariffToggle').classList.add('open');
-          document.getElementById('tb-auto').textContent = '';
+          if (opLower.includes(key)) {
+            document.getElementById('lieferant').value = val;
+            break;
+          }
         }
 
-        // Show tariff breakdown
-        document.getElementById('tariffTitle').textContent = `⚡ ${operatorName} — Stromtarif 2026`;
-        document.getElementById('tariffGrid').innerHTML = `
-          <span>Energie:</span><span class="tg-val">${Number(t.energy).toFixed(2)} Rp/kWh</span>
-          <span>Netznutzung:</span><span class="tg-val">${Number(t.gridusage).toFixed(2)} Rp/kWh</span>
-          <span>Abgaben:</span><span class="tg-val">${Number(t.charge).toFixed(2)} Rp/kWh</span>
-          <span>KEV/Reserve:</span><span class="tg-val">${Number(t.aidfee).toFixed(2)} Rp/kWh</span>
-          <span style="font-weight:700">Total:</span><span class="tg-val" style="color:var(--brand-cyan-dark)">${Number(t.total).toFixed(2)} Rp/kWh</span>
-        `;
-        document.getElementById('tariffDetail').textContent = matched
-          ? `Kat. H4 (5-Zi-Whg, 4'500 kWh/J) · Quelle: ElCom`
-          : `Netzbetreiber erkannt — bitte Tarif manuell auswählen ↑`;
-        info.classList.add('visible');
+        // Always keep dropdowns hidden — live data is used
+        tariffAutoDetected = true;
+        document.getElementById('tariffFields').classList.remove('open');
+        document.getElementById('tariffToggle').classList.remove('open');
 
         // Apply live tariff to calculator
         const totalRp = Number(t.total);
         const energyRp = Number(t.energy);
-        if (totalRp > 0) {
-          tariffAutoDetected = true;
-          T.sp = totalRp;
-          T.ev = Math.max(energyRp * 0.4, 6); // Einspeisevergütung: ~40% of energy component, min 6 Rp (2026 law)
-          T.zt = Math.round(totalRp * 0.8 * 100) / 100; // ZEV tariff = 80% of total
-          T.name = operatorName + ' H4';
-          document.getElementById('tb-tarif').textContent = T.name;
-          document.getElementById('tb-auto').textContent = '(automatisch)';
-          document.getElementById('ti-sp').textContent = T.sp.toFixed(2) + ' Rp/kWh';
-          document.getElementById('ti-ev').textContent = T.ev.toFixed(2) + ' Rp/kWh';
-          document.getElementById('ti-zt').textContent = T.zt.toFixed(2) + ' Rp/kWh';
-          document.getElementById('no-ev-label').textContent = T.ev.toFixed(2);
-          document.getElementById('zev-zt-label').textContent = T.zt.toFixed(2);
-          calc();
-        }
+        T.sp = totalRp;
+        T.ev = Math.max(energyRp * 0.4, 6); // Einspeisevergütung: min 6 Rp/kWh (2026)
+        T.zt = Math.round(totalRp * 0.8 * 100) / 100; // ZEV = 80% des Netzpreises
+        T.name = operatorName + ' H4';
+
+        // Update top-bar
+        document.getElementById('tb-tarif').textContent = T.name;
+        document.getElementById('tb-auto').textContent = '(automatisch)';
+
+        // Update tariff info displays
+        document.getElementById('ti-sp').textContent = T.sp.toFixed(2) + ' Rp/kWh';
+        document.getElementById('ti-ev').textContent = T.ev.toFixed(2) + ' Rp/kWh';
+        document.getElementById('ti-zt').textContent = T.zt.toFixed(2) + ' Rp/kWh';
+        document.getElementById('no-ev-label').textContent = T.ev.toFixed(2);
+        document.getElementById('zev-zt-label').textContent = T.zt.toFixed(2);
+
+        // Show tariff breakdown in info box
+        document.getElementById('tariffTitle').textContent = `⚡ ${operatorName} — Stromtarif 2026`;
+        document.getElementById('tariffGrid').innerHTML = `
+          <span>Energie:</span><span class="tg-val">${energyRp.toFixed(2)} Rp/kWh</span>
+          <span>Netznutzung:</span><span class="tg-val">${Number(t.gridusage).toFixed(2)} Rp/kWh</span>
+          <span>Abgaben:</span><span class="tg-val">${Number(t.charge).toFixed(2)} Rp/kWh</span>
+          <span>KEV/Reserve:</span><span class="tg-val">${Number(t.aidfee).toFixed(2)} Rp/kWh</span>
+          <span style="font-weight:700">Total:</span><span class="tg-val" style="color:var(--brand-cyan-dark)">${totalRp.toFixed(2)} Rp/kWh</span>
+        `;
+        document.getElementById('tariffDetail').textContent = `Kat. H4 (5-Zi-Whg, 4'500 kWh/J) · Quelle: ElCom`;
+        info.classList.add('visible');
+
+        calc();
       } catch (e) {
         console.warn('ElCom tariff fetch failed:', e);
       }

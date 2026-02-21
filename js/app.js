@@ -51,6 +51,19 @@ function setToggle(k, v) {
   calc();
 }
 
+// Toggle tariff detail collapse/expand
+function toggleTariffDetail() {
+  const wrap = document.getElementById('tariffDetailsWrap');
+  const chevron = document.getElementById('tariffChevron');
+  wrap.classList.toggle('open');
+  chevron.classList.toggle('open');
+}
+
+function setTariffSummary(totalRp) {
+  const el = document.getElementById('tariffSummaryText');
+  if (el) el.textContent = `Total: ${totalRp.toFixed(2)} Rp/kWh`;
+}
+
 // Solar roof area slider
 let solarMaxFlaeche = 0; // m² of suitable roof
 let solarMaxKwh = 0;     // max kWh/year at 100%
@@ -108,6 +121,7 @@ function applyTariff(operatorName, totalRp, energyRp, gridusageRp, chargeRp, aid
         <span>Einspeiseverg\u00FCtung:</span><span class="tg-val">${T.ev.toFixed(2)} Rp/kWh <em style="font-size:9px;color:var(--muted)">(gesch\u00E4tzt)</em></span>
       `;
   document.getElementById('tariffDetail').textContent = 'Kat. H4 (5-Zi-Whg, 4\'500 kWh/J) \u00B7 Quelle: ElCom \u00B7 Einspeisung gesch\u00E4tzt';
+  setTariffSummary(totalRp);
   info.classList.add('visible');
   // Hide loading
   document.getElementById('tariffLoading').style.display = 'none';
@@ -145,6 +159,7 @@ function applyOperatorOnly(operatorName) {
           <span>ZEV-Tarif (80%):</span><span class="tg-val">${T.zt.toFixed(2)} Rp/kWh</span>
         `;
     document.getElementById('tariffDetail').textContent = 'Tarif aus hinterlegten Daten \u00B7 Stand 2026';
+    setTariffSummary(T.sp);
   } else {
     // Unknown operator — use Swiss average values
     T = {
@@ -162,6 +177,7 @@ function applyOperatorOnly(operatorName) {
           <span>ZEV-Tarif (80%):</span><span class="tg-val">${T.zt.toFixed(2)} Rp/kWh</span>
         `;
     document.getElementById('tariffDetail').textContent = 'Schweizer Durchschnittstarif H4 \u00B7 bitte ggf. anpassen';
+    setTariffSummary(T.sp);
   }
 
   // Update top-bar
@@ -811,3 +827,32 @@ function calc() {
 ['wp', 'em', 'ma', 'zv'].forEach(k => document.getElementById(`${k}-nein`).classList.add('on'));
 calc();
 onSplitSlider();
+
+// ── Section Navigation ──
+function scrollToSection(e, id) {
+  e.preventDefault();
+  const el = document.getElementById(id);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// Intersection Observer for active nav pill
+(function initSectionNav() {
+  const sections = ['rendite', 'langzeit', 'stromfluss', 'kosten', 'mieter', 'herstellkosten'];
+  const pills = document.querySelectorAll('.nav-pill');
+  if (!pills.length) return;
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        pills.forEach(p => p.classList.remove('active'));
+        const idx = sections.indexOf(entry.target.id);
+        if (idx >= 0 && pills[idx]) pills[idx].classList.add('active');
+      }
+    });
+  }, { rootMargin: '-100px 0px -60% 0px', threshold: 0 });
+
+  sections.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) observer.observe(el);
+  });
+})();

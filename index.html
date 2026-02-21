@@ -98,7 +98,13 @@
           </div>
           <div class="tariff-info" id="tariffInfo">
             <div class="tariff-title" id="tariffTitle"></div>
-            <div class="tariff-grid" id="tariffGrid"></div>
+            <div class="tariff-summary" id="tariffSummary" onclick="toggleTariffDetail()">
+              <span class="tariff-summary-text" id="tariffSummaryText">Total: —</span>
+              <span class="tariff-chevron" id="tariffChevron">▼</span>
+            </div>
+            <div class="tariff-details-wrap" id="tariffDetailsWrap">
+              <div class="tariff-grid" id="tariffGrid"></div>
+            </div>
             <div class="tariff-detail" id="tariffDetail"></div>
           </div>
         </div>
@@ -280,98 +286,32 @@
     <!-- ══ MAIN ════════════════════════════════════════ -->
     <main class="main">
 
-      <!-- ① STROMFLUSS ───────────────────────────────── -->
-      <section>
+      <!-- ── Section Navigation ── -->
+      <nav class="section-nav" id="sectionNav">
+        <a class="nav-pill active" href="#rendite" onclick="scrollToSection(event,'rendite')">
+          <span class="nav-pill-num">1</span>Rendite
+        </a>
+        <a class="nav-pill" href="#langzeit" onclick="scrollToSection(event,'langzeit')">
+          <span class="nav-pill-num">2</span>25 Jahre
+        </a>
+        <a class="nav-pill" href="#stromfluss" onclick="scrollToSection(event,'stromfluss')">
+          <span class="nav-pill-num">3</span>Stromfluss
+        </a>
+        <a class="nav-pill" href="#kosten" onclick="scrollToSection(event,'kosten')">
+          <span class="nav-pill-num">4</span>Kosten
+        </a>
+        <a class="nav-pill" href="#mieter" onclick="scrollToSection(event,'mieter')">
+          <span class="nav-pill-num">5</span>Mieter
+        </a>
+        <a class="nav-pill" href="#herstellkosten" onclick="scrollToSection(event,'herstellkosten')">
+          <span class="nav-pill-num">6</span>Herstellkosten
+        </a>
+      </nav>
+
+      <!-- ① VERGLEICH ──────────────────────────────────── -->
+      <section id="rendite">
         <div class="sh">
           <div class="sh-num">1</div>
-          <h2>Wohin fliesst der Solarstrom?</h2>
-          <div class="sh-line"></div>
-        </div>
-
-        <div class="explain">
-          <div class="ex-title">Funktionsweise</div>
-          Die Solaranlage produziert Strom. Dieser wird auf <strong>3 Wege</strong> aufgeteilt:
-          Das Haus verbraucht einen Teil selbst, ein Teil wird direkt an die Mieterinnen und Mieter verkauft (ZEV), und
-          der Rest wird ins Stromnetz eingespeist.
-          Die Prozentsätze können Sie links im Regler anpassen — der Rechner zeigt Ihnen sofort, wie sich dies auf die
-          Einnahmen auswirkt.
-        </div>
-
-        <!-- FLOW DIAGRAM: Ohne ZEV -->
-        <div
-          style="margin-bottom:10px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.8px; color:var(--negative);">
-          Ohne ZEV — Stromfluss</div>
-        <div class="flow" style="margin-bottom:16px;">
-          <div class="flow-source">
-            <div class="flow-source-icon">☀️</div>
-            <div class="flow-source-val" id="f-prod">31'020</div>
-            <div class="flow-source-label">kWh Produktion<br>pro Jahr</div>
-          </div>
-          <div class="flow-arrow">→</div>
-          <div class="flow-splits">
-            <div class="flow-split fs-eigen">
-              <div class="fs-pct">20%</div>
-              <div class="fs-kwh" id="f-no-e-kwh">—</div>
-              <div class="fs-label">Eigenverbrauch</div>
-              <div class="fs-desc">Allgemeinstrom, Lift,<br>Treppenhaus etc.</div>
-              <div class="fs-chf" id="f-no-e-chf">—</div>
-              <div class="fs-chf-label">CHF / Jahr (eingespart)</div>
-            </div>
-            <div class="flow-split fs-einspeis">
-              <div class="fs-pct">80%</div>
-              <div class="fs-kwh" id="f-no-ei-kwh">—</div>
-              <div class="fs-label">→ Stromnetz</div>
-              <div class="fs-desc">Verkauf zum tiefen<br>Einspeisungstarif</div>
-              <div class="fs-chf" id="f-no-ei-chf">—</div>
-              <div class="fs-chf-label">CHF / Jahr Einnahmen</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- FLOW DIAGRAM: Mit ZEV -->
-        <div
-          style="margin-bottom:10px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.8px; color:var(--brand-cyan);">
-          Mit ZEV — Stromfluss</div>
-        <div class="flow">
-          <div class="flow-source">
-            <div class="flow-source-icon">☀️</div>
-            <div class="flow-source-val" id="f-prod2">31'020</div>
-            <div class="flow-source-label">kWh Produktion<br>pro Jahr</div>
-          </div>
-          <div class="flow-arrow">→</div>
-          <div class="flow-splits">
-            <div class="flow-split fs-eigen">
-              <div class="fs-pct">20%</div>
-              <div class="fs-kwh" id="f-zev-e-kwh">—</div>
-              <div class="fs-label">Eigenverbrauch</div>
-              <div class="fs-desc">Allgemeinstrom, Lift,<br>Treppenhaus etc.</div>
-              <div class="fs-chf" id="f-zev-e-chf">—</div>
-              <div class="fs-chf-label">CHF / Jahr (eingespart)</div>
-            </div>
-            <div class="flow-split fs-zev">
-              <div class="fs-pct" id="f-zev-pct">60%</div>
-              <div class="fs-kwh" id="f-zev-z-kwh">—</div>
-              <div class="fs-label">→ Mieter (ZEV)</div>
-              <div class="fs-desc">Günstiger als Netztarif,<br>besser als Einspeisung</div>
-              <div class="fs-chf" id="f-zev-z-chf">—</div>
-              <div class="fs-chf-label">CHF / Jahr Einnahmen</div>
-            </div>
-            <div class="flow-split fs-einspeis">
-              <div class="fs-pct" id="f-einspeis-pct">20%</div>
-              <div class="fs-kwh" id="f-zev-ei-kwh">—</div>
-              <div class="fs-label">→ Stromnetz</div>
-              <div class="fs-desc">Restlicher Strom wird<br>ins Netz eingespeist</div>
-              <div class="fs-chf" id="f-zev-ei-chf">—</div>
-              <div class="fs-chf-label">CHF / Jahr Einnahmen</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- ② VERGLEICH ──────────────────────────────────── -->
-      <section>
-        <div class="sh">
-          <div class="sh-num">2</div>
           <h2>Rendite-Vergleich: Ohne vs. Mit ZEV</h2>
           <div class="sh-line"></div>
         </div>
@@ -488,10 +428,10 @@
         </div>
       </section>
 
-      <!-- ② b — 25 JAHRE VERGLEICH ──────────────────────── -->
-      <section>
+      <!-- ② 25 JAHRE VERGLEICH ────────────────────────── -->
+      <section id="langzeit">
         <div class="sh">
-          <div class="sh-num">3</div>
+          <div class="sh-num">2</div>
           <h2>Was zählt wirklich: Gesamtgewinn über 25 Jahre</h2>
           <div class="sh-line"></div>
         </div>
@@ -615,6 +555,94 @@
         </div>
 
       </section>
+      <!-- ③ STROMFLUSS ───────────────────────────────── -->
+      <section id="stromfluss">
+        <div class="sh">
+          <div class="sh-num">3</div>
+          <h2>Wohin fliesst der Solarstrom?</h2>
+          <div class="sh-line"></div>
+        </div>
+
+        <div class="explain">
+          <div class="ex-title">Funktionsweise</div>
+          Die Solaranlage produziert Strom. Dieser wird auf <strong>3 Wege</strong> aufgeteilt:
+          Das Haus verbraucht einen Teil selbst, ein Teil wird direkt an die Mieterinnen und Mieter verkauft (ZEV), und
+          der Rest wird ins Stromnetz eingespeist.
+          Die Prozentsätze können Sie links im Regler anpassen — der Rechner zeigt Ihnen sofort, wie sich dies auf die
+          Einnahmen auswirkt.
+        </div>
+
+        <!-- FLOW DIAGRAM: Ohne ZEV -->
+        <div
+          style="margin-bottom:10px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.8px; color:var(--negative);">
+          Ohne ZEV — Stromfluss</div>
+        <div class="flow" style="margin-bottom:16px;">
+          <div class="flow-source">
+            <div class="flow-source-icon">☀️</div>
+            <div class="flow-source-val" id="f-prod">31'020</div>
+            <div class="flow-source-label">kWh Produktion<br>pro Jahr</div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-splits">
+            <div class="flow-split fs-eigen">
+              <div class="fs-pct">20%</div>
+              <div class="fs-kwh" id="f-no-e-kwh">—</div>
+              <div class="fs-label">Eigenverbrauch</div>
+              <div class="fs-desc">Allgemeinstrom, Lift,<br>Treppenhaus etc.</div>
+              <div class="fs-chf" id="f-no-e-chf">—</div>
+              <div class="fs-chf-label">CHF / Jahr (eingespart)</div>
+            </div>
+            <div class="flow-split fs-einspeis">
+              <div class="fs-pct">80%</div>
+              <div class="fs-kwh" id="f-no-ei-kwh">—</div>
+              <div class="fs-label">→ Stromnetz</div>
+              <div class="fs-desc">Verkauf zum tiefen<br>Einspeisungstarif</div>
+              <div class="fs-chf" id="f-no-ei-chf">—</div>
+              <div class="fs-chf-label">CHF / Jahr Einnahmen</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- FLOW DIAGRAM: Mit ZEV -->
+        <div
+          style="margin-bottom:10px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.8px; color:var(--brand-cyan);">
+          Mit ZEV — Stromfluss</div>
+        <div class="flow">
+          <div class="flow-source">
+            <div class="flow-source-icon">☀️</div>
+            <div class="flow-source-val" id="f-prod2">31'020</div>
+            <div class="flow-source-label">kWh Produktion<br>pro Jahr</div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-splits">
+            <div class="flow-split fs-eigen">
+              <div class="fs-pct">20%</div>
+              <div class="fs-kwh" id="f-zev-e-kwh">—</div>
+              <div class="fs-label">Eigenverbrauch</div>
+              <div class="fs-desc">Allgemeinstrom, Lift,<br>Treppenhaus etc.</div>
+              <div class="fs-chf" id="f-zev-e-chf">—</div>
+              <div class="fs-chf-label">CHF / Jahr (eingespart)</div>
+            </div>
+            <div class="flow-split fs-zev">
+              <div class="fs-pct" id="f-zev-pct">60%</div>
+              <div class="fs-kwh" id="f-zev-z-kwh">—</div>
+              <div class="fs-label">→ Mieter (ZEV)</div>
+              <div class="fs-desc">Günstiger als Netztarif,<br>besser als Einspeisung</div>
+              <div class="fs-chf" id="f-zev-z-chf">—</div>
+              <div class="fs-chf-label">CHF / Jahr Einnahmen</div>
+            </div>
+            <div class="flow-split fs-einspeis">
+              <div class="fs-pct" id="f-einspeis-pct">20%</div>
+              <div class="fs-kwh" id="f-zev-ei-kwh">—</div>
+              <div class="fs-label">→ Stromnetz</div>
+              <div class="fs-desc">Restlicher Strom wird<br>ins Netz eingespeist</div>
+              <div class="fs-chf" id="f-zev-ei-chf">—</div>
+              <div class="fs-chf-label">CHF / Jahr Einnahmen</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
 
       <!-- ④ ZEV KOSTEN ─────────────────────────────────── -->
       <section id="kosten">
@@ -719,7 +747,7 @@
       </section>
 
       <!-- ⑥ HERSTELLKOSTEN ─────────────────────────────── -->
-      <section>
+      <section id="herstellkosten">
         <div class="sh">
           <div class="sh-num">6</div>
           <h2>Herstellkosten PV Strom</h2>

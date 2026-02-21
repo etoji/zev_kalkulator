@@ -454,6 +454,7 @@
       border: none;
       pointer-events: none;
       -webkit-appearance: none;
+      appearance: none;
       top: 8px;
     }
 
@@ -2000,4 +2001,122 @@
       font-size: 9px;
       color: rgba(255, 255, 255, 0.3);
       line-height: 1.5;
+    }
+
+    /* ─── Collapsible Tariff Summary ─── */
+    .tariff-summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 10px;
+      margin: 6px 0 2px;
+      background: var(--brand-cyan-light);
+      border: 1px solid var(--brand-cyan-mid);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .tariff-summary:hover {
+      background: var(--brand-cyan-mid);
+    }
+
+    .tariff-summary-text {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--brand-cyan-dark);
+    }
+
+    .tariff-chevron {
+      font-size: 10px;
+      color: var(--brand-cyan-dark);
+      transition: transform 0.3s ease;
+    }
+
+    .tariff-chevron.open {
+      transform: rotate(180deg);
+    }
+
+    .tariff-details-wrap {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.35s ease;
+    }
+
+    .tariff-details-wrap.open {
+      max-height: 300px;
+    }
+
+    /* ─── Section Navigation Bar ─── */
+    .section-nav {
+      position: sticky;
+      top: 48px;
+      z-index: 90;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 16px;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--grey-300);
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .section-nav::-webkit-scrollbar {
+      display: none;
+    }
+
+    .nav-pill {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--grey-500);
+      white-space: nowrap;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.25s ease;
+      text-decoration: none;
+      user-select: none;
+    }
+
+    .nav-pill:hover {
+      color: var(--brand-cyan-dark);
+      background: var(--brand-cyan-light);
+    }
+
+    .nav-pill.active {
+      color: var(--brand-cyan-dark);
+      background: var(--brand-cyan-light);
+      border-color: var(--brand-cyan-mid);
+    }
+
+    .nav-pill-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--grey-300);
+      color: var(--grey-700);
+      font-size: 10px;
+      font-weight: 700;
+      transition: all 0.25s ease;
+    }
+
+    .nav-pill.active .nav-pill-num {
+      background: var(--brand-cyan);
+      color: #fff;
+    }
+
+    /* Scroll offset for sticky nav */
+    section[id] {
+      scroll-margin-top: 100px;
     }

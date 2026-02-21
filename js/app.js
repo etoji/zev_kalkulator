@@ -348,43 +348,102 @@ async function fetchMunicipalityAndTariff(x, y) {
     return;
   }
 
-  // Step 2: Try to get operator name from ElCom municipality page via CORS proxy
-  let operatorName = null;
-  const pageUrl = `https://www.strompreis.elcom.admin.ch/de/municipality/${bfsNr}`;
-  const proxies = [
-    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(pageUrl)}`,
-    `https://api.allorigins.win/raw?url=${encodeURIComponent(pageUrl)}`,
-    `https://corsproxy.io/?${encodeURIComponent(pageUrl)}`
-  ];
-
-  for (const proxyUrl of proxies) {
-    try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 6000);
-      const r = await fetch(proxyUrl, { signal: controller.signal });
-      clearTimeout(timeout);
-      if (!r.ok) continue;
-      const html = await r.text();
-      const match = html.match(/<script id="__NEXT_DATA__"[^>]*>(.*?)<\/script>/);
-      if (match) {
-        const nd = JSON.parse(match[1]);
-        const ops = nd?.props?.pageProps?.operators;
-        if (ops && ops.length) {
-          operatorName = ops[0].name;
-          console.log('ElCom operator found:', operatorName);
-          break;
+  // Step 2a: Try ElCom GraphQL API (updated schema 2026)
+  if (bfsNr) {
+    const gqlBody = {
+      operationName: 'ObservationsWithAllPriceComponents',
+      query: `query ObservationsWithAllPriceComponents($locale: String!, $filters: ObservationFilters!, $observationKind: ObservationKind) {
+        observations(locale: $locale, filters: $filters, observationKind: $observationKind) {
+          period municipality operatorLabel category
+          energy: value(priceComponent: energy)
+          gridusage: value(priceComponent: gridusage)
+          charge: value(priceComponent: charge)
+          aidfee: value(priceComponent: aidfee)
+          total: value(priceComponent: total)
         }
+      }`,
+      variables: {
+        filters: { category: ['H4'], municipality: [bfsNr], period: ['2026'], product: ['standard'] },
+        locale: 'de',
+        observationKind: 'Municipality'
       }
-    } catch (e) {
-      console.warn('ElCom proxy failed:', e.message || e);
+    };
+
+    const gqlUrl = 'https://www.strompreis.elcom.admin.ch/api/graphql';
+    let gqlData = null;
+
+    // Try direct POST (in case ElCom adds CORS headers in the future)
+    try {
+      const r = await fetch(gqlUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(gqlBody)
+      });
+      if (r.ok) gqlData = await r.json();
+    } catch (e) { /* CORS blocked — expected on GitHub Pages */ }
+
+    // Try via corsproxy.io (supports POST)
+    if (!gqlData) {
+      try {
+        const r = await fetch('https://corsproxy.io/?' + encodeURIComponent(gqlUrl), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(gqlBody)
+        });
+        if (r.ok) gqlData = await r.json();
+      } catch (e) { console.warn('GraphQL proxy failed:', e.message); }
+    }
+
+    if (gqlData?.data?.observations?.length) {
+      const t = gqlData.data.observations[0];
+      console.log('ElCom API success:', t.operatorLabel, 'total:', t.total);
+      applyTariff(
+        t.operatorLabel || 'Unbekannt',
+        Number(t.total), Number(t.energy),
+        Number(t.gridusage), Number(t.charge), Number(t.aidfee)
+      );
+      return; // Done — real API data!
     }
   }
 
-  // Step 3: Apply the tariff
+  // Step 2b: Fallback — get operator name from ElCom HTML page via CORS proxy
+  let operatorName = null;
+  if (bfsNr) {
+    const pageUrl = `https://www.strompreis.elcom.admin.ch/de/municipality/${bfsNr}`;
+    const proxies = [
+      `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(pageUrl)}`,
+      `https://api.allorigins.win/raw?url=${encodeURIComponent(pageUrl)}`,
+      `https://corsproxy.io/?${encodeURIComponent(pageUrl)}`
+    ];
+
+    for (const proxyUrl of proxies) {
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 6000);
+        const r = await fetch(proxyUrl, { signal: controller.signal });
+        clearTimeout(timeout);
+        if (!r.ok) continue;
+        const html = await r.text();
+        const match = html.match(/<script id="__NEXT_DATA__"[^>]*>(.*?)<\/script>/);
+        if (match) {
+          const nd = JSON.parse(match[1]);
+          const ops = nd?.props?.pageProps?.operators;
+          if (ops && ops.length) {
+            operatorName = ops[0].name;
+            console.log('ElCom operator (HTML):', operatorName);
+            break;
+          }
+        }
+      } catch (e) {
+        console.warn('ElCom HTML proxy failed:', e.message || e);
+      }
+    }
+  }
+
+  // Step 3: Apply tariff from local data
   if (operatorName) {
     applyOperatorOnly(operatorName);
   } else if (gemName) {
-    // No operator from proxy — use municipality name to guess
     applyOperatorOnly(gemName);
   } else {
     document.getElementById('tariffLoading').style.display = 'none';

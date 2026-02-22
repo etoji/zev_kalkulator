@@ -825,8 +825,15 @@ function calc() {
 
   // Delta
   const diff = z_cf - no_cf;
-  set('delta-chf', f(Math.round(diff)));
-  set('delta-desc', `Mit ZEV erzielen Sie ${f(Math.round(diff))} CHF mehr Einnahmen pro Jahr. Dies entspricht ${f(diff / no_cf * 100, 1)}% mehr Rendite als ohne ZEV.`);
+  const isDiffPositive = diff >= 0;
+
+  document.getElementById('delta-chf').textContent = (isDiffPositive ? '+' : '\u2212') + f(Math.round(Math.abs(diff)));
+
+  if (isDiffPositive) {
+    set('delta-desc', `Mit ZEV erzielen Sie ${f(Math.round(diff))} CHF mehr Einnahmen pro Jahr. Dies entspricht ${f(diff / no_cf * 100, 1)}% mehr j\u00E4hrliche Rendite als ohne ZEV.`);
+  } else {
+    set('delta-desc', `Ohne ZEV erzielen Sie ${f(Math.round(Math.abs(diff)))} CHF mehr Einnahmen pro Jahr. ZEV reduziert Ihre j\u00E4hrliche Rendite um ${f(Math.abs(diff / no_cf * 100), 1)}%.`);
+  }
 
   // \u2500\u2500 25 JAHRE \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
   const yrs = 25;
@@ -853,9 +860,22 @@ function calc() {
   set('y25-zev-amor', (z_amor > 0 ? f(z_amor, 1) : '\u2014') + ' Jahre');
   set('y25-zev-total', f(Math.round(zev_total25)) + ' CHF');
 
-  // Winner box
+  // Winner box & Dynamic Styling
   set('wb-val', f(Math.round(Math.abs(gain25diff))));
-  const zevWins = gain25diff > 0;
+  const zevWins = gain25diff >= 0;
+
+  // Dynamic UI highlighting
+  document.getElementById('delta-box').className = 'delta-box ' + (zevWins ? '' : 'is-negative');
+  document.getElementById('sc-head-A').className = 'sc-head ' + (zevWins ? 'is-loser' : 'is-winner');
+  document.getElementById('sc-head-B').className = 'sc-head ' + (zevWins ? 'is-winner' : 'is-loser');
+  document.getElementById('yc-head-A').className = 'yr25-card-head ' + (zevWins ? 'is-loser' : 'is-winner');
+  document.getElementById('yc-head-B').className = 'yr25-card-head ' + (zevWins ? 'is-winner' : 'is-loser');
+
+  document.getElementById('sc-label-A').textContent = 'Szenario A' + (zevWins ? '' : ' — Empfohlen');
+  document.getElementById('sc-label-B').textContent = 'Szenario B' + (zevWins ? ' — Empfohlen' : '');
+  document.getElementById('yc-label-A').textContent = 'Szenario A' + (zevWins ? '' : ' — Empfohlen');
+  document.getElementById('yc-label-B').textContent = 'Szenario B' + (zevWins ? ' — Empfohlen' : '');
+
   document.getElementById('wb-title').textContent = zevWins
     ? 'ZEV erzielt \u00FCber 25 Jahre einen h\u00F6heren Gesamtgewinn'
     : 'Ohne ZEV ist in diesem Szenario rentabler';
@@ -863,7 +883,7 @@ function calc() {
     ? `Obwohl die Amortisationszeit mit ZEV ${f(Math.abs(z_amor - no_amor), 1)} Jahre l\u00E4nger dauert, ` +
     `\u00FCberwiegen die h\u00F6heren j\u00E4hrlichen Ertr\u00E4ge deutlich. Nach ${f(z_amor > 0 ? z_amor : 0, 1)} Jahren ` +
     `ist die Investition vollst\u00E4ndig amortisiert \u2014 danach erzielen Sie jedes Jahr ${f(Math.round(diff))} CHF mehr Ertrag.`
-    : `In diesem Szenario ist ZEV weniger vorteilhaft. Wir empfehlen, den ZEV-Anteil im Regler zu erh\u00F6hen.`;
+    : `In diesem Szenario fressen die wiederkehrenden ZEV-Kosten (Abrechnung etc.) den Gewinn der Stromeinsparung auf. ZEV ist hier ein Verlustgesch\u00E4ft im Vergleich zur einfachen Überschusseinspeisung.`;
 
   // \u2500\u2500 TIMELINE CHART \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
   const chartEl = document.getElementById('timeline-chart');

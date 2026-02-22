@@ -1033,11 +1033,11 @@
       justify-content: space-between;
     }
 
-    .sc-head.no-zev {
+    .sc-head.is-loser {
       border-top: 4px solid var(--negative);
     }
 
-    .sc-head.mit-zev {
+    .sc-head.is-winner {
       border-top: 4px solid var(--brand-cyan);
     }
 
@@ -1049,11 +1049,11 @@
       margin-bottom: 3px;
     }
 
-    .sc-head.no-zev .sc-label {
+    .sc-head.is-loser .sc-label {
       color: var(--negative);
     }
 
-    .sc-head.mit-zev .sc-label {
+    .sc-head.is-winner .sc-label {
       color: var(--brand-cyan-deep);
     }
 
@@ -1081,11 +1081,11 @@
       line-height: 1;
     }
 
-    .no-zev .sc-cf-num {
+    .is-loser .sc-cf-num {
       color: var(--negative);
     }
 
-    .mit-zev .sc-cf-num {
+    .is-winner .sc-cf-num {
       color: var(--brand-cyan);
     }
 
@@ -1246,6 +1246,17 @@
       align-items: center;
       gap: 14px;
       margin-top: 16px;
+      transition: all 0.3s ease;
+    }
+
+    .delta-box.is-negative {
+      background: var(--negative-light);
+      border-color: var(--negative-mid);
+    }
+
+    .delta-box.is-negative .delta-title,
+    .delta-box.is-negative .delta-num {
+      color: var(--negative);
     }
 
     .delta-icon {
@@ -1320,12 +1331,20 @@
       border-bottom: 1px solid var(--alabaster);
     }
 
-    .yr25-card-head.no {
+    .yr25-card-head.is-loser {
       border-top: 4px solid var(--negative);
     }
 
-    .yr25-card-head.zev {
+    .yr25-card-head.is-winner {
       border-top: 4px solid var(--brand-cyan);
+    }
+
+    .yr25-card-head.is-loser .yc-label {
+      color: var(--negative);
+    }
+
+    .yr25-card-head.is-winner .yc-label {
+      color: var(--brand-cyan-deep);
     }
 
     .yc-label {

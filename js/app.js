@@ -15,9 +15,10 @@ function updateTariffPopup() {
 
   const badgeHtml = (type) => {
     const map = {
-      'api': '<span class="tb-popup-badge badge-api">ElCom API</span>',
+      'api': '<span class="tb-popup-badge badge-api">LINDAS OGD</span>',
       'lokal': '<span class="tb-popup-badge badge-lokal">Hinterlegt</span>',
       'geschaetzt': '<span class="tb-popup-badge badge-geschaetzt">Gesch\u00E4tzt</span>',
+      'minimum': '<span class="tb-popup-badge badge-minimum">Minimum</span>',
       'none': ''
     };
     return map[type] || '';
@@ -41,7 +42,7 @@ function updateTariffPopup() {
     </div>
   `;
 
-  footer.textContent = 'Bezugstarife: ElCom Kat. H4 (5-Zi-Whg, 4\u2019500 kWh/J) \u00B7 Einspeisung: gem\u00E4ss Netzbetreiber \u00B7 ZEV: 80% des Bezugstarifs';
+  footer.textContent = 'Bezugstarife: ElCom / LINDAS OGD Kat. H4 (5-Zi-Whg, 4\u2019500 kWh/J) \u00B7 Einspeisung: gem\u00E4ss Netzbetreiber \u00B7 ZEV: 80% des Bezugstarifs';
 }
 
 function setToggle(k, v) {
@@ -94,11 +95,11 @@ function onRoofSlider() {
 function applyTariff(operatorName, totalRp, energyRp, gridusageRp, chargeRp, aidfeeRp) {
   T = {
     sp: totalRp,
-    ev: Math.max(energyRp * 0.4, 6), // Einspeisevergütung: min 6 Rp/kWh (2026)
+    ev: 6.00, // Einspeisevergütung: min 6 Rp/kWh nach neuem Stromgesetz 2026
     zt: Math.round(totalRp * 0.8 * 100) / 100, // ZEV = 80% des Netzpreises
     zm: T.zm || 5.00,
     name: operatorName + ' H4',
-    ev_quelle: 'geschätzt' // ElCom liefert keine Einspeisevergütung; Formel: 40% Energiepreis
+    ev_quelle: 'Mindestvergütung' // Gesetzlich festgelegt ab 2026
   };
   // Top-bar
   document.getElementById('tb-tarif').textContent = T.name;
@@ -114,17 +115,17 @@ function applyTariff(operatorName, totalRp, energyRp, gridusageRp, chargeRp, aid
         <span>Abgaben:</span><span class="tg-val">${chargeRp.toFixed(2)} Rp/kWh</span>
         <span>KEV/Reserve:</span><span class="tg-val">${aidfeeRp.toFixed(2)} Rp/kWh</span>
         <span style="font-weight:700">Total:</span><span class="tg-val" style="color:var(--brand-cyan-dark)">${totalRp.toFixed(2)} Rp/kWh</span>
-        <span>Einspeiseverg\u00FCtung:</span><span class="tg-val">${T.ev.toFixed(2)} Rp/kWh <em style="font-size:9px;color:var(--muted)">(gesch\u00E4tzt)</em></span>
+        <span>Einspeiseverg\u00FCtung:</span><span class="tg-val">${T.ev.toFixed(2)} Rp/kWh <em style="font-size:9px;color:var(--muted)">(Minimum)</em></span>
       `;
-  document.getElementById('tariffDetail').textContent = 'Kat. H4 (5-Zi-Whg, 4\'500 kWh/J) \u00B7 Quelle: ElCom \u00B7 Einspeisung gesch\u00E4tzt';
+  document.getElementById('tariffDetail').textContent = 'Kat. H4 (5-Zi-Whg, 4\'500 kWh/J) \u00B7 Quelle: LINDAS OGD \u00B7 Einspeisung: Gesetzliches Minimum';
   setTariffSummary(totalRp);
   info.classList.add('visible');
   // Hide loading
   document.getElementById('tariffLoading').style.display = 'none';
   // Update popup source info
   tariffSource = {
-    sp: { value: T.sp, source: `ElCom GraphQL API \u2014 Gemeinde-Nr. via GeoAdmin`, type: 'api' },
-    ev: { value: T.ev, source: `Formel: 40% des Energiepreises (${energyRp.toFixed(2)} Rp), min. 6 Rp/kWh`, type: 'geschaetzt' },
+    sp: { value: T.sp, source: `LINDAS OGD (ElCom) \u2014 Gemeinde-Nr. via GeoAdmin`, type: 'api' },
+    ev: { value: T.ev, source: `Gesetzliche Mindestverg\u00FCtung (Stromgesetz 2026)`, type: 'minimum' },
     zt: { value: T.zt, source: `Berechnet: ${T.sp.toFixed(2)} \u00D7 80% = ${T.zt.toFixed(2)} Rp/kWh`, type: 'geschaetzt' }
   };
   updateTariffPopup();
@@ -157,19 +158,18 @@ function applyOperatorOnly(operatorName) {
     document.getElementById('tariffDetail').textContent = 'Tarif aus hinterlegten Daten \u00B7 Stand 2026';
     setTariffSummary(T.sp);
   } else {
-    // Unknown operator — use Swiss average values
     T = {
       sp: CH_DURCHSCHNITT.sp,
-      ev: CH_DURCHSCHNITT.ev,
+      ev: 6.00,
       zt: CH_DURCHSCHNITT.zt,
       zm: CH_DURCHSCHNITT.zm,
       name: operatorName + ' (\u00D8 CH)',
-      ev_quelle: 'gesch\u00E4tzt'
+      ev_quelle: 'Mindestvergütung'
     };
     document.getElementById('tariffTitle').textContent = `\u26A1 ${operatorName}`;
     document.getElementById('tariffGrid').innerHTML = `
           <span style="font-weight:700">Strompreis (Bezug):</span><span class="tg-val" style="color:var(--brand-cyan-dark)">${T.sp.toFixed(2)} Rp/kWh</span>
-          <span>Einspeiseverg\u00FCtung:</span><span class="tg-val">${T.ev.toFixed(2)} Rp/kWh <em style="font-size:9px;color:var(--muted)">(gesch\u00E4tzt)</em></span>
+          <span>Einspeiseverg\u00FCtung:</span><span class="tg-val">${T.ev.toFixed(2)} Rp/kWh <em style="font-size:9px;color:var(--muted)">(Minimum)</em></span>
           <span>ZEV-Tarif (80%):</span><span class="tg-val">${T.zt.toFixed(2)} Rp/kWh</span>
         `;
     document.getElementById('tariffDetail').textContent = 'Schweizer Durchschnittstarif H4 \u00B7 bitte ggf. anpassen';
@@ -191,16 +191,17 @@ function applyOperatorOnly(operatorName) {
     const evType = T.ev_quelle === 'offiziell' ? 'lokal' : 'geschaetzt';
     const evSrc = T.ev_quelle === 'offiziell'
       ? `Offizielle Angabe des Netzbetreibers (Stand 2026)`
-      : `Gesch\u00E4tzt basierend auf Marktdaten`;
+      : `Gesetzliche Mindestverg\u00FCtung (Stromgesetz 2026)`;
+    const typeLabel = T.ev_quelle === 'offiziell' ? evType : 'minimum';
     tariffSource = {
-      sp: { value: T.sp, source: `Hinterlegte Daten: ${T.name} (ElCom H4 2026)`, type: 'lokal' },
-      ev: { value: T.ev, source: evSrc, type: evType },
+      sp: { value: T.sp, source: `Hinterlegte Daten: ${T.name} (ElCom/LINDAS H4 2026)`, type: 'lokal' },
+      ev: { value: T.ev, source: evSrc, type: typeLabel },
       zt: { value: T.zt, source: `Berechnet: ${T.sp.toFixed(2)} \u00D7 80% = ${T.zt.toFixed(2)} Rp/kWh`, type: 'geschaetzt' }
     };
   } else {
     tariffSource = {
-      sp: { value: T.sp, source: `Schweizer Durchschnitt H4 2026 (ElCom Median)`, type: 'geschaetzt' },
-      ev: { value: T.ev, source: `Prognose 2026: CH-Durchschnitt (-25% gg\u00FC. 2025)`, type: 'geschaetzt' },
+      sp: { value: T.sp, source: `Schweizer Durchschnitt H4 2026 (ElCom/LINDAS Median)`, type: 'geschaetzt' },
+      ev: { value: T.ev, source: `Gesetzliche Mindestverg\u00FCtung (Stromgesetz 2026)`, type: 'minimum' },
       zt: { value: T.zt, source: `Berechnet: ${T.sp.toFixed(2)} \u00D7 80% = ${T.zt.toFixed(2)} Rp/kWh`, type: 'geschaetzt' }
     };
   }
@@ -535,72 +536,70 @@ document.addEventListener('click', (e) => {
 async function fetchElcomTariff(bfsNr) {
   const info = document.getElementById('tariffInfo');
   info.classList.remove('visible');
-
-  // Show loading animation
   document.getElementById('tariffLoading').style.display = 'block';
 
-  // Approach 1: Try GraphQL POST directly (works from HTTPS origins if ElCom has CORS)
   try {
-    const gqlUrl = 'https://www.strompreis.elcom.admin.ch/api/graphql';
-    const gqlBody = {
-      operationName: 'ObservationsWithAllPriceComponents',
-      variables: {
-        filters: { category: ['H4'], municipality: [String(bfsNr)], period: ['2026'], product: ['standard'] },
-        locale: 'de',
-        observationKind: 'Municipality'
-      },
-      query: `query ObservationsWithAllPriceComponents($filters: ObservationFilterInput!, $locale: String!, $observationKind: ObservationKind!) {
-            observations(filters: $filters, observationKind: $observationKind, locale: $locale) {
-              municipality operator period category product energy gridusage charge aidfee total fixcosts fixcostTotal
-            }
-          }`
-    };
-    // Try direct POST, then via corsproxy.io
-    let gqlData = null;
-    try {
-      const r = await fetch(gqlUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(gqlBody) });
-      if (r.ok) gqlData = await r.json();
-    } catch (e) { }
-    if (!gqlData) {
-      try {
-        const r = await fetch('https://corsproxy.io/?' + encodeURIComponent(gqlUrl), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(gqlBody) });
-        if (r.ok) gqlData = await r.json();
-      } catch (e) { }
-    }
-    if (gqlData?.data?.observations?.length) {
-      const t = gqlData.data.observations[0];
-      applyTariff(t.operator || 'Unbekannt', Number(t.total), Number(t.energy), Number(t.gridusage), Number(t.charge), Number(t.aidfee));
-      return; // done!
-    }
-  } catch (e) { console.warn('GraphQL attempt failed:', e); }
+    const endpoint = 'https://lindas-cached.cluster.ldbar.ch/query';
+    const query = `
+PREFIX cube: <https://cube.link/>
+PREFIX schema: <http://schema.org/>
 
-  // Approach 2: Fallback \u2014 fetch municipality page via GET proxies
-  const pageUrl = `https://www.strompreis.elcom.admin.ch/de/municipality/${bfsNr}`;
-  const proxies = [
-    'https://api.allorigins.win/raw?url=' + encodeURIComponent(pageUrl),
-    'https://corsproxy.io/?' + encodeURIComponent(pageUrl)
-  ];
-  for (const proxyUrl of proxies) {
-    try {
-      const r = await fetch(proxyUrl);
-      if (!r.ok) continue;
-      const html = await r.text();
-      // Extract __NEXT_DATA__ JSON from the HTML
-      const match = html.match(/<script id="__NEXT_DATA__"[^>]*>(.*?)<\/script>/);
-      if (match) {
-        const nd = JSON.parse(match[1]);
-        const pp = nd?.props?.pageProps;
-        if (pp?.operators?.length) {
-          const operatorName = pp.operators[0].name;
-          applyOperatorOnly(operatorName);
-          return;
-        }
+SELECT ?operator ?total ?energy ?gridusage ?charge ?aidfee WHERE {
+  ?obs a cube:Observation ;
+       <https://energy.ld.admin.ch/elcom/electricityprice/dimension/municipality> <https://ld.admin.ch/municipality/${bfsNr}> ;
+       <https://energy.ld.admin.ch/elcom/electricityprice/dimension/category> <https://energy.ld.admin.ch/elcom/electricityprice/category/H4> ;
+       <https://energy.ld.admin.ch/elcom/electricityprice/dimension/product> <https://energy.ld.admin.ch/elcom/electricityprice/product/standard> ;
+       <https://energy.ld.admin.ch/elcom/electricityprice/dimension/period> "2026"^^<http://www.w3.org/2001/XMLSchema#gYear> .
+       
+  OPTIONAL { 
+    ?obs <https://energy.ld.admin.ch/elcom/electricityprice/dimension/operator> ?opUri .
+    ?opUri schema:name ?operator .
+  }
+  OPTIONAL { ?obs <https://energy.ld.admin.ch/elcom/electricityprice/dimension/total> ?total }
+  OPTIONAL { ?obs <https://energy.ld.admin.ch/elcom/electricityprice/dimension/energy> ?energy }
+  OPTIONAL { ?obs <https://energy.ld.admin.ch/elcom/electricityprice/dimension/gridusage> ?gridusage }
+  OPTIONAL { ?obs <https://energy.ld.admin.ch/elcom/electricityprice/dimension/charge> ?charge }
+  OPTIONAL { ?obs <https://energy.ld.admin.ch/elcom/electricityprice/dimension/aidfee> ?aidfee }
+} LIMIT 1
+`;
+
+    const r = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/sparql-results+json',
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: 'query=' + encodeURIComponent(query)
+    });
+
+    if (r.ok) {
+      const data = await r.json();
+      const bindings = data?.results?.bindings;
+      if (bindings && bindings.length > 0) {
+        const b = bindings[0];
+        const operatorName = b.operator?.value || 'Unbekannt';
+        const total = parseFloat(b.total?.value || 0);
+        const energy = parseFloat(b.energy?.value || 0);
+        const gridusage = parseFloat(b.gridusage?.value || 0);
+        const charge = parseFloat(b.charge?.value || 0);
+        const aidfee = parseFloat(b.aidfee?.value || 0);
+
+        applyTariff(operatorName, total, energy, gridusage, charge, aidfee);
+        return; // Success
+      } else {
+        console.log(`LINDAS returned no results for BFS ${bfsNr} in 2026.`);
       }
-    } catch (e) { console.warn('Proxy fallback failed:', proxyUrl, e); }
+    }
+  } catch (e) {
+    console.warn('LINDAS SPARQL fetch failed:', e);
   }
 
-  // If all approaches failed, hide loading
-  document.getElementById('tariffLoading').style.display = 'none';
+  // Fallback: If LINDAS fails or returns no data, try to apply operator from local data.js if exists
+  if (gemName) {
+    applyOperatorOnly(gemName);
+  } else {
+    document.getElementById('tariffLoading').style.display = 'none';
+  }
 }
 
 function f(v, dec = 0) {

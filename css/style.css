@@ -1981,18 +1981,27 @@
     }
 
     .badge-api {
-      background: rgba(0, 174, 239, 0.2);
-      color: var(--brand-cyan);
+      background: rgba(0, 186, 227, 0.15);
+      color: #00bae3;
+      border-color: rgba(0, 186, 227, 0.3);
     }
 
     .badge-lokal {
-      background: rgba(76, 175, 80, 0.2);
-      color: #81C784;
+      background: rgba(69, 186, 128, 0.15);
+      color: #45ba80;
+      border-color: rgba(69, 186, 128, 0.3);
     }
 
     .badge-geschaetzt {
-      background: rgba(255, 183, 77, 0.2);
-      color: #FFB74D;
+      background: rgba(245, 166, 35, 0.15);
+      color: #f5a623;
+      border-color: rgba(245, 166, 35, 0.3);
+    }
+
+    .badge-minimum {
+      background: rgba(162, 89, 255, 0.15);
+      color: #a259ff;
+      border-color: rgba(162, 89, 255, 0.3);
     }
 
     .tb-popup-footer {

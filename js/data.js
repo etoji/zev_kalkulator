@@ -20,8 +20,8 @@ const TARIFE = {
             ewb_basis: {
                 name: 'EWB Grundversorgung',
                 sp: 33.06,         // ElCom H4 2026
-                ev: 10.96,         // Quelle: ewb.ch — Rückliefertarif ≤100 kW inkl. HKN
-                ev_quelle: 'offiziell',
+                ev: 6.00,          // Gesetzliche Mindestvergütung 2026
+                ev_quelle: 'Mindestvergütung',
                 zt: 26.45,         // 80% von 33.06
                 zm: 7.00
             }
@@ -32,8 +32,8 @@ const TARIFE = {
             bkw_grund: {
                 name: 'BKW Grundversorgung',
                 sp: 27.70,         // ElCom H4 2026
-                ev: 6.00,          // Quelle: bkw.ch — Mindestvergütung ≤30 kW (marktbasiert, Minimum)
-                ev_quelle: 'offiziell',
+                ev: 6.00,          // Gesetzliche Mindestvergütung 2026
+                ev_quelle: 'Mindestvergütung',
                 zt: 22.16,         // 80% von 27.70
                 zm: 6.58
             }
@@ -44,8 +44,8 @@ const TARIFE = {
             ckw_haushalt: {
                 name: 'CKW Haushalt',
                 sp: 25.20,         // ElCom H4 2026
-                ev: 8.00,          // Quelle: ckw.ch — 6 Rp/kWh Minimum + 2 Rp/kWh HKN
-                ev_quelle: 'offiziell',
+                ev: 6.00,          // Gesetzliche Mindestvergütung 2026
+                ev_quelle: 'Mindestvergütung',
                 zt: 20.16,         // 80% von 25.20
                 zm: 6.50
             }
@@ -56,8 +56,8 @@ const TARIFE = {
             iwb_basis: {
                 name: 'IWB Basistarif',
                 sp: 37.91,         // ElCom H4 2026
-                ev: 12.00,         // Quelle: iwb.ch — marktbasiert (Schätzung basierend auf 2025-Niveau)
-                ev_quelle: 'geschätzt',
+                ev: 6.00,          // Gesetzliche Mindestvergütung 2026
+                ev_quelle: 'Mindestvergütung',
                 zt: 30.33,         // 80% von 37.91
                 zm: 4.86
             }
@@ -73,11 +73,10 @@ const OPERATOR_MAP = {
     'industrielle werke basel': 'iwb', 'iwb': 'iwb'
 };
 
-// Schweizer Durchschnittswerte (ElCom Median H4 2026)
 const CH_DURCHSCHNITT = {
     sp: 32.14,
-    ev: 9.60,           // Prognose 2026: schweizweiter Durchschnitt (geschätzt, -25% ggü. 2025)
-    ev_quelle: 'geschätzt',
+    ev: 6.00,           // Gesetzliche Mindestvergütung 2026
+    ev_quelle: 'Mindestvergütung',
     zt: 25.71,
     zm: 5.00
 };

@@ -1,0 +1,31 @@
+﻿{
+    "operator":  {
+                     "type":  "literal",
+                     "value":  "Energie Wasser Bern"
+                 },
+    "total":  {
+                  "datatype":  "http://www.w3.org/2001/XMLSchema#decimal",
+                  "type":  "literal",
+                  "value":  "31.630"
+              },
+    "energy":  {
+                   "datatype":  "http://www.w3.org/2001/XMLSchema#decimal",
+                   "type":  "literal",
+                   "value":  "13.700"
+               },
+    "gridusage":  {
+                      "datatype":  "http://www.w3.org/2001/XMLSchema#decimal",
+                      "type":  "literal",
+                      "value":  "12.980"
+                  },
+    "charge":  {
+                   "datatype":  "http://www.w3.org/2001/XMLSchema#decimal",
+                   "type":  "literal",
+                   "value":  "2.650"
+               },
+    "aidfee":  {
+                   "datatype":  "http://www.w3.org/2001/XMLSchema#decimal",
+                   "type":  "literal",
+                   "value":  "2.300"
+               }
+}

@@ -1479,33 +1479,71 @@
       flex: 1;
       display: flex;
       flex-direction: column;
-      gap: 3px;
+      gap: 5px;
       min-width: 0;
-      overflow: hidden;
+      position: relative;
+      padding: 5px 0;
+    }
+
+    /* Dashed zero line in the middle */
+    .tl-bars::before {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 0;
+      bottom: 0;
+      width: 1px;
+      border-left: 1px dashed var(--grey-300);
+      z-index: 0;
     }
 
     .tl-bar-row {
+      position: relative;
+      height: 16px;
       display: flex;
       align-items: center;
-      gap: 6px;
-      min-width: 0;
+      z-index: 1;
     }
 
     .tl-bar {
-      height: 13px;
-      border-radius: 3px;
-      min-width: 3px;
-      flex-shrink: 0;
-      transition: width .25s ease;
-      max-width: calc(100% - 46px);
+      position: absolute;
+      height: 12px;
+      border-radius: 2px;
+      min-width: 2px;
+      transition: width .25s ease, left .25s ease, right .25s ease;
     }
 
-    .tl-bar.no {
-      background: linear-gradient(90deg, var(--negative-light), var(--negative-mid));
+    /* Positive bars start at 50% and go right */
+    .tl-bar.pos {
+      left: 50%;
+      transform-origin: left center;
     }
 
-    .tl-bar.zev {
-      background: linear-gradient(90deg, var(--brand-cyan-light), var(--brand-cyan-mid));
+    /* Negative bars end at 50% and go left */
+    .tl-bar.neg {
+      right: 50%;
+      transform-origin: right center;
+    }
+
+    .tl-bar.no.pos {
+      background: var(--positive-light);
+      border: 1px solid var(--positive-mid);
+    }
+
+    .tl-bar.no.neg {
+      background: var(--negative-light);
+      border: 1px solid var(--negative-mid);
+    }
+
+    .tl-bar.zev.pos {
+      background: var(--brand-cyan-light);
+      border: 1px solid var(--brand-cyan-mid);
+    }
+
+    .tl-bar.zev.neg {
+      background: var(--negative-light);
+      border: 1px solid var(--negative-mid);
+      opacity: 0.8;
     }
 
     .tl-bar-val {
@@ -1513,7 +1551,21 @@
       font-size: 9px;
       color: var(--grey-700);
       white-space: nowrap;
-      flex-shrink: 0;
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+
+    .tl-bar-val.pos {
+      left: calc(50% + var(--bar-width) + 6px);
+      justify-content: flex-start;
+      margin-left: 5px;
+    }
+
+    .tl-bar-val.neg {
+      right: calc(50% + var(--bar-width) + 6px);
+      text-align: right;
+      margin-right: 5px;
     }
 
     .tl-amort-no,

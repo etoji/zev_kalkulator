@@ -89,6 +89,20 @@ const TARIFE = {
                 zm: 4.86
             }
         }
+    },
+    ebs: {
+        tarife: {
+            ebs_schwyz: {
+                name: 'ebs Standard',
+                sp: 26.27,         // ElCom H4 2026 für Schwyz
+                ev: 6.00,          // Gesetzliche Mindestvergütung 2026
+                ev_quelle: 'Mindestvergütung',
+                ev_lokal: 12.00,   // Realistischer lokaler Tarif ebs
+                ev_lokal_quelle: 'Durchschnitt ebs',
+                zt: 21.01,         // 80% von 26.27
+                zm: 5.50
+            }
+        }
     }
 };
 
@@ -97,7 +111,8 @@ const OPERATOR_MAP = {
     'energie wasser bern': 'ewb',
     'bkw energie': 'bkw', 'bkw': 'bkw',
     'centralschweizerische kraftwerke': 'ckw', 'ckw ag': 'ckw',
-    'industrielle werke basel': 'iwb', 'iwb': 'iwb'
+    'industrielle werke basel': 'iwb', 'iwb': 'iwb',
+    'ebs energie ag': 'ebs', 'ebs': 'ebs'
 };
 
 const CH_DURCHSCHNITT = {

@@ -306,6 +306,20 @@
         </div>
 
         <div class="field">
+          <div class="field-label" style="display:flex; justify-content:space-between; align-items:center;">
+            <span>Kostenübernahme Abrechnung</span>
+            <span class="tip tip-right"
+              data-tip="Legt fest, ob die jährlichen Abrechnungsabos vom ZEV getragen oder als Nebenkosten den Mietern überwälzt werden.">?</span>
+          </div>
+          <div class="toggles" style="display:grid; grid-template-columns:1fr; gap:4px; margin-top:4px;">
+            <button class="tog on" id="ku-vermieter" onclick="setKuType('vermieter')"
+              style="text-align:left; padding:8px 12px; height:auto;">Vermieter / ZEV (aus Ertrag)</button>
+            <button class="tog" id="ku-mieter" onclick="setKuType('mieter')"
+              style="text-align:left; padding:8px 12px; height:auto;">Auf Mieter überwälzen (als Nebenkosten)</button>
+          </div>
+        </div>
+
+        <div class="field">
           <div class="field-label">Machbarkeitsabklärung</div>
           <div class="toggles">
             <button class="tog on" id="ma-nein" onclick="setToggle('ma','nein')">Nein</button>

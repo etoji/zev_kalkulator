@@ -92,7 +92,15 @@ function onRoofSlider() {
 }
 
 window.evType = 'min';
+window.kuType = 'vermieter';
 window.lastOperatorName = '';
+
+function setKuType(type) {
+  window.kuType = type;
+  document.getElementById('ku-vermieter').classList.toggle('on', type === 'vermieter');
+  document.getElementById('ku-mieter').classList.toggle('on', type === 'mieter');
+  calc();
+}
 
 function setEvType(type) {
   window.evType = type;
@@ -762,30 +770,37 @@ function calc() {
 
   const variableKostenJaehrlich = anzahlNe * PREISKATALOG.abrechnungsmodul[modul].jaehrlich_pro_ne;
 
-  const totW = grundkostenJaehrlich + variableKostenJaehrlich; // Total Wiederkehrend
+  // totW is the operating cost borne by the landlord/ZEV system owner.
+  // If the costs are passed down as Nebenkosten to tenants, the landlord doesn't pay them out of the solar profit margin.
+  const totW = grundkostenJaehrlich + (window.kuType === 'vermieter' ? variableKostenJaehrlich : 0); // Total Wiederkehrend
 
   // Ohne ZEV (fixed 20/80)
   const no_e_kwh = pro * 0.20;
   const no_ei_kwh = pro * 0.80;
-  const no_e_chf = no_e_kwh * (sp - hk);
-  const no_ei_chf = no_ei_kwh * (ev - hk);
+  const no_e_chf = no_e_kwh * sp;
+  const no_ei_chf = no_ei_kwh * ev;
   const no_cf = no_e_chf + no_ei_chf;
+
+  // Amortisation (Payback Period) = Investment / Annual Cashflow
   const no_amor = no_cf > 0 ? inv / no_cf : 0;
 
   // Mit ZEV (adjustable)
   const z_e_kwh = pro * pctEigen / 100;
   const z_z_kwh = pro * pctZev / 100;
   const z_ei_kwh = pro * pctEi / 100;
-  const z_e_chf = z_e_kwh * (sp - hk);
-  const z_z_chf = z_z_kwh * (zt - hk);
-  const z_ei_chf = z_ei_kwh * (ev - hk);
+  const z_e_chf = z_e_kwh * sp;
+  const z_z_chf = z_z_kwh * zt;
+  const z_ei_chf = z_ei_kwh * ev;
   const z_cf = z_e_chf + z_z_chf + z_ei_chf;
-  const z_amor = z_cf > 0 ? (inv + totE) / (z_cf - totW) : 0;
+
+  // Amortisation = Total Investment / (Revenues - ZEV Operating Costs)
+  const z_amor = (z_cf - totW) > 0 ? (inv + totE) / (z_cf - totW) : 0;
 
   // Mieter
   const m_str = (z_z_kwh / we) * (sp - zt);
   const m_zk = T.zm * 12;
-  const m_zev = -PREISKATALOG.abrechnungsmodul[modul].jaehrlich_pro_ne; // Mieter pays the recurring billing fee
+  // If passed to tenant, they pay it. If landlord pays it from margin, tenant effectively doesn't see it as an extra cost reducing their savings.
+  const m_zev = window.kuType === 'mieter' ? -PREISKATALOG.abrechnungsmodul[modul].jaehrlich_pro_ne : 0;
   const m_tot = m_str + m_zk + m_zev;
 
   // Flow section
@@ -838,12 +853,11 @@ function calc() {
   // \u2500\u2500 25 JAHRE \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
   const yrs = 25;
   const no_ein25 = no_cf * yrs;
-  const no_total25 = no_ein25 - inv;
+  const no_total25 = no_ein25 - tk25; // Revenues minus ALL PV costs (Inv + maint over 25y)
 
-  const zev_cf_net = z_cf - totW;           // cashflow after annual operating costs
-  const zev_ein25 = zev_cf_net * yrs;
-  const zev_inv25 = inv + totE;            // PV + ZEV one-time
-  const zev_total25 = zev_ein25 - zev_inv25;
+  const zev_ein25 = z_cf * yrs;
+  const zev_inv25 = tk25 + totE; // PV Total costs + ZEV initial costs
+  const zev_total25 = zev_ein25 - zev_inv25 - (totW * yrs);
 
   const gain25diff = zev_total25 - no_total25;
 
@@ -893,15 +907,28 @@ function calc() {
   let maxVal = 0;
   let crossoverYear = null;
   const noVals = [], zevVals = [];
+
+  // Ongoing PV maintenance & replacements (total costs minus initial investment)
+  const maintenance_per_year = (tk25 - inv) / yrs;
+  const no_net_yearly = no_cf - maintenance_per_year;
+  const zev_net_yearly = (z_cf - totW) - maintenance_per_year;
+
+  // Initial investment debt at year 0:
+  const no_start_debt = inv;
+  const zev_start_debt = inv + totE;
+
   for (let y = 1; y <= yrs; y++) {
-    const nv = no_cf * y - inv;
-    const zv = zev_cf_net * y - zev_inv25;
+    // Cumulative cash flow vs initial debt
+    const nv = (no_net_yearly * y) - no_start_debt;
+    const zv = (zev_net_yearly * y) - zev_start_debt;
     noVals.push(nv);
     zevVals.push(zv);
     maxVal = Math.max(maxVal, Math.abs(nv), Math.abs(zv));
     if (crossoverYear === null && zv > nv) crossoverYear = y;
   }
-  const scale = v => Math.max(2, Math.abs(v) / maxVal * 100);
+  // Calculate scale (max width for one side is 50% to leave room for the center line)
+  // we use maxVal / 0.45 so the largest bar takes up 45% of the total width (leaving 5% margin)
+  const scale = v => Math.min(48, Math.abs(v) / maxVal * 45);
 
   // Show every 5th year + year 1
   const showYears = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 15, 20, 25];
@@ -911,23 +938,24 @@ function calc() {
     const row = document.createElement('div');
     row.className = 'tl-row';
 
-    const noColor = nv >= 0 ? 'background:#FCA5A9' : 'background:#FECDD3; opacity:.5';
-    const zevColor = zv >= 0 ? 'background:#7EC8E3' : 'background:var(--cerulean-light); opacity:.5';
+    const nDir = nv >= 0 ? 'pos' : 'neg';
+    const zDir = zv >= 0 ? 'pos' : 'neg';
+
     const noLabel = (nv >= 0 ? '+' : '') + f(Math.round(nv / 1000), 1) + 'k';
     const zevLabel = (zv >= 0 ? '+' : '') + f(Math.round(zv / 1000), 1) + 'k';
 
     row.innerHTML = `
-      <div class="tl-year">Jahr ${y}</div>
-      <div class="tl-bars">
-        <div class="tl-bar-row">
-          <div class="tl-bar no" style="width:${scale(nv)}%; ${noColor}"></div>
-          <span class="tl-bar-val" style="color:${nv >= 0 ? 'var(--charcoal)' : 'var(--strawberry)'}">${noLabel}</span>
-        </div>
-        <div class="tl-bar-row">
-          <div class="tl-bar zev" style="width:${scale(zv)}%; ${zevColor}"></div>
-          <span class="tl-bar-val" style="color:${zv >= 0 ? 'var(--charcoal)' : 'var(--cerulean)'}">${zevLabel}</span>
-        </div>
-      </div>`;
+        <div class="tl-year">Jahr ${y}</div>
+        <div class="tl-bars">
+          <div class="tl-bar-row">
+            <div class="tl-bar no ${nDir}" style="width:${scale(nv)}%;"></div>
+            <span class="tl-bar-val ${nDir}" style="--bar-width:${scale(nv)}%; color:${nv >= 0 ? 'var(--charcoal)' : 'var(--strawberry)'}">${noLabel}</span>
+          </div>
+          <div class="tl-bar-row">
+            <div class="tl-bar zev ${zDir}" style="width:${scale(zv)}%;"></div>
+            <span class="tl-bar-val ${zDir}" style="--bar-width:${scale(zv)}%; color:${zv >= 0 ? 'var(--charcoal)' : 'var(--cerulean)'}">${zevLabel}</span>
+          </div>
+        </div>`;
     chartEl.appendChild(row);
   });
 
@@ -969,7 +997,12 @@ function calc() {
   wHtml += makeRow(`Server Abo (${PREISKATALOG.server[serverTyp].label})`, f(PREISKATALOG.server[serverTyp].jaehrlich));
   if (isToggled('po')) wHtml += makeRow('PV & EMS Nutzerportal', f(PREISKATALOG.portal.jaehrlich));
   if (isToggled('iz')) wHtml += makeRow('Internetzugang Server', f(PREISKATALOG.internetzugang.jaehrlich));
-  wHtml += makeRow(`Abrechnungsmodul (${PREISKATALOG.abrechnungsmodul[modul].label})`, f(variableKostenJaehrlich));
+  if (window.kuType === 'mieter') {
+    wHtml += `<div class="kost-row" style="opacity:0.5;"><span class="kr-label" style="text-decoration:line-through;">Abrechnungsmodul (${PREISKATALOG.abrechnungsmodul[modul].label})</span><span class="kr-val" style="text-decoration:line-through;">${f(variableKostenJaehrlich)}</span></div>`;
+    wHtml += `<div style="font-size:10.5px; color:var(--brand-cyan-dark); text-align:right; margin-top:-4px; margin-bottom:6px; font-weight:600;">Direkt über Mieter-Nebenkosten finanziert</div>`;
+  } else {
+    wHtml += makeRow(`Abrechnungsmodul (${PREISKATALOG.abrechnungsmodul[modul].label})`, f(variableKostenJaehrlich));
+  }
 
   document.getElementById('kosten-wiederkehrend-rows').innerHTML = wHtml;
 

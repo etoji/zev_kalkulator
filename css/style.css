@@ -190,20 +190,21 @@
       }
     }
 
-    /* â”€â”€â”€ LAYOUT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* ─── LAYOUT ─── */
     .layout {
       display: grid;
       grid-template-columns: 290px 1fr;
-      min-height: calc(100vh - 58px);
+      min-height: calc(100vh - 100px);
     }
 
-    /* â”€â”€â”€ SIDEBAR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* ─── SIDEBAR ─── */
     .sidebar {
       background: var(--white);
       border-right: 1px solid var(--alabaster);
       position: sticky;
-      top: 58px;
-      height: calc(100vh - 58px);
+      top: 100px;
+      /* 58px header + ~42px nav */
+      height: calc(100vh - 100px);
       overflow-y: auto;
       display: flex;
       flex-direction: column;
@@ -2051,16 +2052,18 @@
     /* ─── Section Navigation Bar ─── */
     .section-nav {
       position: sticky;
-      top: 48px;
+      top: 58px;
+      /* height of .topbar (border bottom is included in 58px) */
       z-index: 90;
       display: flex;
       align-items: center;
       gap: 4px;
-      padding: 6px 16px;
-      background: rgba(255, 255, 255, 0.85);
+      padding: 8px 16px;
+      background: rgba(255, 255, 255, 0.92);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
       border-bottom: 1px solid var(--grey-300);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
       overflow-x: auto;
       scrollbar-width: none;
     }
@@ -2073,7 +2076,7 @@
       display: flex;
       align-items: center;
       gap: 5px;
-      padding: 5px 12px;
+      padding: 6px 14px;
       border-radius: 20px;
       font-size: 11px;
       font-weight: 600;
@@ -2095,6 +2098,7 @@
       color: var(--brand-cyan-dark);
       background: var(--brand-cyan-light);
       border-color: var(--brand-cyan-mid);
+      box-shadow: 0 2px 6px rgba(0, 174, 239, 0.15);
     }
 
     .nav-pill-num {
@@ -2118,5 +2122,6 @@
 
     /* Scroll offset for sticky nav */
     section[id] {
-      scroll-margin-top: 100px;
+      scroll-margin-top: 130px;
+      /* 61px header + ~50px nav + padding */
     }

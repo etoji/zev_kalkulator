@@ -103,10 +103,6 @@ function applyTariff(operatorName, totalRp, energyRp, gridusageRp, chargeRp, aid
   // Top-bar
   document.getElementById('tb-tarif').textContent = T.name;
   document.getElementById('tb-auto').textContent = '(automatisch)';
-  // Sidebar tariff display
-  document.getElementById('ti-sp').textContent = T.sp.toFixed(2) + ' Rp/kWh';
-  document.getElementById('ti-ev').textContent = T.ev.toFixed(2) + ' Rp/kWh';
-  document.getElementById('ti-zt').textContent = T.zt.toFixed(2) + ' Rp/kWh';
   document.getElementById('no-ev-label').textContent = T.ev.toFixed(2);
   document.getElementById('zev-zt-label').textContent = T.zt.toFixed(2);
   // Info box
@@ -184,11 +180,6 @@ function applyOperatorOnly(operatorName) {
   document.getElementById('tb-tarif').textContent = T.name;
   document.getElementById('tb-auto').textContent = matched ? '(automatisch)' : '(Durchschnitt)';
 
-  // Update sidebar tariff display
-  document.getElementById('ti-sp').textContent = T.sp.toFixed(2) + ' Rp/kWh';
-  document.getElementById('ti-ev').textContent = T.ev.toFixed(2) + ' Rp/kWh';
-  document.getElementById('ti-zt').textContent = T.zt.toFixed(2) + ' Rp/kWh';
-  document.getElementById('ti-zm').textContent = T.zm.toFixed(2) + ' CHF';
   document.getElementById('no-ev-label').textContent = T.ev.toFixed(2);
   document.getElementById('zev-zt-label').textContent = T.zt.toFixed(2);
 

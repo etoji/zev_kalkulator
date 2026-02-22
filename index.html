@@ -35,6 +35,27 @@
       <div class="tb-live"></div>
     </div>
   </header>
+  <!-- ── Section Navigation (Full Width) ── -->
+  <nav class="section-nav" id="sectionNav">
+    <a class="nav-pill active" href="#rendite" onclick="scrollToSection(event,'rendite')">
+      <span class="nav-pill-num">1</span>Rendite
+    </a>
+    <a class="nav-pill" href="#langzeit" onclick="scrollToSection(event,'langzeit')">
+      <span class="nav-pill-num">2</span>25 Jahre
+    </a>
+    <a class="nav-pill" href="#stromfluss" onclick="scrollToSection(event,'stromfluss')">
+      <span class="nav-pill-num">3</span>Stromfluss
+    </a>
+    <a class="nav-pill" href="#kosten" onclick="scrollToSection(event,'kosten')">
+      <span class="nav-pill-num">4</span>Kosten
+    </a>
+    <a class="nav-pill" href="#mieter" onclick="scrollToSection(event,'mieter')">
+      <span class="nav-pill-num">5</span>Mieter
+    </a>
+    <a class="nav-pill" href="#herstellkosten" onclick="scrollToSection(event,'herstellkosten')">
+      <span class="nav-pill-num">6</span>Herstellkosten
+    </a>
+  </nav>
 
   <div class="layout">
 
@@ -128,7 +149,7 @@
             <span class="tip" data-tip="Anzahl der Wohnungen im Mehrfamilienhaus">?</span>
           </div>
           <div class="ctrl">
-            <input type="number" id="anzahlWE" value="" min="1" oninput="calc()" placeholder="z.B. 9">
+            <input type="number" id="anzahlWE" value="" min="1" oninput="calc()" placeholder="">
             <span class="ctrl-unit">WE</span>
           </div>
         </div>
@@ -136,7 +157,7 @@
         <div class="field">
           <div class="field-label">Peakleistung PVA</div>
           <div class="ctrl">
-            <input type="number" id="kwp" value="31.02" step="0.01" oninput="syncKwp()">
+            <input type="number" id="kwp" value="" step="0.01" oninput="syncKwp()">
             <span class="ctrl-unit">kWp</span>
           </div>
         </div>
@@ -146,7 +167,7 @@
             <span class="tip" data-tip="Automatisch berechnet: 1 kWp × 1000 kWh/Jahr (Schweizer Richtwert)">?</span>
           </div>
           <div class="ctrl" style="background:var(--alabaster-light); opacity:.85;">
-            <input type="number" id="produktion" value="31020" readonly style="cursor:default; color:var(--charcoal);">
+            <input type="number" id="produktion" value="" readonly style="cursor:default; color:var(--charcoal);">
             <span class="ctrl-unit">kWh/J</span>
           </div>
         </div>
@@ -174,7 +195,7 @@
         <div class="field">
           <div class="field-label">Offerte exkl. MWST</div>
           <div class="ctrl">
-            <input type="number" id="offerte" value="" oninput="calc()" placeholder="z.B. 31300">
+            <input type="number" id="offerte" value="" oninput="calc()" placeholder="">
             <span class="ctrl-unit">CHF</span>
           </div>
         </div>
@@ -230,7 +251,7 @@
           <div class="split-range-track">
             <div class="split-track-fill" id="track-fill" style="left:0%; right:0%"></div>
           </div>
-          <input type="range" id="sl-split" min="0" max="80" value="33" step="1" oninput="onSplitSlider()">
+          <input type="range" id="sl-split" min="0" max="80" value="20" step="1" oninput="onSplitSlider()">
         </div>
 
         <!-- Pct chips -->
@@ -269,46 +290,13 @@
         </div>
       </div>
 
-      <div class="sb-tarif-info">
-        <div class="ti-title">Aktive Tarife</div>
-        <div class="ti-row"><span class="ti-label">Strompreis (Bezug)</span><span class="ti-val" id="ti-sp">—</span>
-        </div>
-        <div class="ti-row"><span class="ti-label">Einspeisevergütung</span><span class="ti-val" id="ti-ev">—</span>
-        </div>
-        <div class="ti-row"><span class="ti-label">ZEV-Tarif (80% Bezug)</span><span class="ti-val" id="ti-zt">—</span>
-        </div>
-        <div class="ti-row"><span class="ti-label">Zählerkosten/Monat</span><span class="ti-val" id="ti-zm">—</span>
-        </div>
-      </div>
+
 
     </aside>
-
     <!-- ══ MAIN ════════════════════════════════════════ -->
     <main class="main">
 
-      <!-- ── Section Navigation ── -->
-      <nav class="section-nav" id="sectionNav">
-        <a class="nav-pill active" href="#rendite" onclick="scrollToSection(event,'rendite')">
-          <span class="nav-pill-num">1</span>Rendite
-        </a>
-        <a class="nav-pill" href="#langzeit" onclick="scrollToSection(event,'langzeit')">
-          <span class="nav-pill-num">2</span>25 Jahre
-        </a>
-        <a class="nav-pill" href="#stromfluss" onclick="scrollToSection(event,'stromfluss')">
-          <span class="nav-pill-num">3</span>Stromfluss
-        </a>
-        <a class="nav-pill" href="#kosten" onclick="scrollToSection(event,'kosten')">
-          <span class="nav-pill-num">4</span>Kosten
-        </a>
-        <a class="nav-pill" href="#mieter" onclick="scrollToSection(event,'mieter')">
-          <span class="nav-pill-num">5</span>Mieter
-        </a>
-        <a class="nav-pill" href="#herstellkosten" onclick="scrollToSection(event,'herstellkosten')">
-          <span class="nav-pill-num">6</span>Herstellkosten
-        </a>
-      </nav>
-
-      <!-- ① VERGLEICH ──────────────────────────────────── -->
+      <!-- ③ STROMFLUSS ───────────────────────────────── -->
       <section id="rendite">
         <div class="sh">
           <div class="sh-num">1</div>

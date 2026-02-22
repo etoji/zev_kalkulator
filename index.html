@@ -366,25 +366,31 @@
               <span class="sc-amor-label"><span>⏱</span> Amortisation</span>
               <span class="sc-amor-val" id="no-amor">—</span>
             </div>
-            <div class="sc-row">
-              <div class="sc-bar" style="background:var(--strawberry)"></div>
-              <div class="sc-row-body">
-                <div class="sc-row-name">Eigenverbrauch Haus</div>
-                <div class="sc-row-desc">Intern genutzter Strom — reduziert den Netzbezug</div>
-                <div class="sc-row-kwh" id="no-e-kwh">—</div>
-              </div>
-              <div class="sc-pct pct-red">20%</div>
-              <div class="sc-row-chf" id="no-e-chf">—</div>
+            <div class="sc-details-toggle" onclick="toggleRenditeDetails()">
+              <span class="sc-dt-text">Details einblenden</span>
+              <span class="chevron">▼</span>
             </div>
-            <div class="sc-row">
-              <div class="sc-bar" style="background:var(--cerulean)"></div>
-              <div class="sc-row-body">
-                <div class="sc-row-name">Einspeisung ins Netz</div>
-                <div class="sc-row-desc">Sehr tiefer Vergütungstarif (~<span id="no-ev-label">—</span> Rp./kWh)</div>
-                <div class="sc-row-kwh" id="no-ei-kwh">—</div>
+            <div class="sc-details" id="details-A">
+              <div class="sc-row">
+                <div class="sc-bar" style="background:var(--strawberry)"></div>
+                <div class="sc-row-body">
+                  <div class="sc-row-name">Eigenverbrauch Haus</div>
+                  <div class="sc-row-desc">Intern genutzter Strom — reduziert den Netzbezug</div>
+                  <div class="sc-row-kwh" id="no-e-kwh">—</div>
+                </div>
+                <div class="sc-pct pct-red">20%</div>
+                <div class="sc-row-chf" id="no-e-chf">—</div>
               </div>
-              <div class="sc-pct pct-blue">80%</div>
-              <div class="sc-row-chf" id="no-ei-chf">—</div>
+              <div class="sc-row">
+                <div class="sc-bar" style="background:var(--cerulean)"></div>
+                <div class="sc-row-body">
+                  <div class="sc-row-name">Einspeisung ins Netz</div>
+                  <div class="sc-row-desc">Sehr tiefer Vergütungstarif (~<span id="no-ev-label">—</span> Rp./kWh)</div>
+                  <div class="sc-row-kwh" id="no-ei-kwh">—</div>
+                </div>
+                <div class="sc-pct pct-blue">80%</div>
+                <div class="sc-row-chf" id="no-ei-chf">—</div>
+              </div>
             </div>
           </div>
 
@@ -412,36 +418,43 @@
               <span class="sc-amor-label"><span>⏱</span> Amortisation (inkl. ZEV Kosten)</span>
               <span class="sc-amor-val" id="zev-amor">—</span>
             </div>
-            <div class="sc-row">
-              <div class="sc-bar" style="background:var(--strawberry)"></div>
-              <div class="sc-row-body">
-                <div class="sc-row-name">Eigenverbrauch Haus</div>
-                <div class="sc-row-desc">Identisch wie ohne ZEV</div>
-                <div class="sc-row-kwh" id="zev-e-kwh">—</div>
-              </div>
-              <div class="sc-pct pct-red">20%</div>
-              <div class="sc-row-chf" id="zev-e-chf">—</div>
+            <div class="sc-details-toggle" onclick="toggleRenditeDetails()">
+              <span class="sc-dt-text">Details einblenden</span>
+              <span class="chevron">▼</span>
             </div>
-            <div class="sc-row">
-              <div class="sc-bar" style="background:var(--green)"></div>
-              <div class="sc-row-body">
-                <div class="sc-row-name">ZEV → direkt an Mieter</div>
-                <div class="sc-row-desc">Zum ZEV-Tarif (~<span id="zev-zt-label">—</span> Rp./kWh) — deutlich besser als
-                  Einspeisung</div>
-                <div class="sc-row-kwh" id="zev-z-kwh">—</div>
+            <div class="sc-details" id="details-B">
+              <div class="sc-row">
+                <div class="sc-bar" style="background:var(--strawberry)"></div>
+                <div class="sc-row-body">
+                  <div class="sc-row-name">Eigenverbrauch Haus</div>
+                  <div class="sc-row-desc">Identisch wie ohne ZEV</div>
+                  <div class="sc-row-kwh" id="zev-e-kwh">—</div>
+                </div>
+                <div class="sc-pct pct-red">20%</div>
+                <div class="sc-row-chf" id="zev-e-chf">—</div>
               </div>
-              <div class="sc-pct pct-green" id="zev-z-pct">17%</div>
-              <div class="sc-row-chf" id="zev-z-chf">—</div>
-            </div>
-            <div class="sc-row">
-              <div class="sc-bar" style="background:var(--cerulean)"></div>
-              <div class="sc-row-body">
-                <div class="sc-row-name">Rest → Einspeisung</div>
-                <div class="sc-row-desc">Verbleibender Anteil wird ins Netz eingespeist</div>
-                <div class="sc-row-kwh" id="zev-ei-kwh">—</div>
+              <div class="sc-row">
+                <div class="sc-bar" style="background:var(--green)"></div>
+                <div class="sc-row-body">
+                  <div class="sc-row-name">ZEV → direkt an Mieter</div>
+                  <div class="sc-row-desc">Zum ZEV-Tarif (~<span id="zev-zt-label">—</span> Rp./kWh) — deutlich besser
+                    als
+                    Einspeisung</div>
+                  <div class="sc-row-kwh" id="zev-z-kwh">—</div>
+                </div>
+                <div class="sc-pct pct-green" id="zev-z-pct">17%</div>
+                <div class="sc-row-chf" id="zev-z-chf">—</div>
               </div>
-              <div class="sc-pct pct-blue" id="zev-ei-pct">63%</div>
-              <div class="sc-row-chf" id="zev-ei-chf">—</div>
+              <div class="sc-row">
+                <div class="sc-bar" style="background:var(--cerulean)"></div>
+                <div class="sc-row-body">
+                  <div class="sc-row-name">Rest → Einspeisung</div>
+                  <div class="sc-row-desc">Verbleibender Anteil wird ins Netz eingespeist</div>
+                  <div class="sc-row-kwh" id="zev-ei-kwh">—</div>
+                </div>
+                <div class="sc-pct pct-blue" id="zev-ei-pct">63%</div>
+                <div class="sc-row-chf" id="zev-ei-chf">—</div>
+              </div>
             </div>
           </div>
         </div>

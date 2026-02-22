@@ -981,7 +981,7 @@
     .compare-grid {
       display: grid;
       grid-template-columns: 1fr 60px 1fr;
-      align-items: center;
+      align-items: start;
       gap: 0;
     }
 
@@ -1187,6 +1187,46 @@
       text-align: right;
       align-self: center;
       min-width: 80px;
+    }
+
+    .sc-details-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 20px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--brand-cyan-deep);
+      background: var(--brand-cyan-light);
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.2s;
+      border-bottom: 1px solid var(--alabaster-light);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .sc-details-toggle:hover {
+      background: #cceeff;
+    }
+
+    .sc-details-toggle .chevron {
+      font-size: 10px;
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .sc-details-toggle.open .chevron {
+      transform: rotate(180deg);
+    }
+
+    .sc-details {
+      display: none;
+      background: #fafafa;
+      border-bottom: 1px solid var(--alabaster-light);
+    }
+
+    .sc-details.open {
+      display: block;
     }
 
     /* Delta callout */

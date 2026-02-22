@@ -943,3 +943,22 @@ function scrollToSection(e, id) {
     if (el) observer.observe(el);
   });
 })();
+
+// ── Rendite Accordion ──
+function toggleRenditeDetails() {
+  const toggles = document.querySelectorAll('.sc-details-toggle');
+  const details = document.querySelectorAll('.sc-details');
+  if (!toggles.length) return;
+
+  const isOpening = !toggles[0].classList.contains('open');
+
+  toggles.forEach(t => {
+    t.classList.toggle('open', isOpening);
+    const textSpan = t.querySelector('.sc-dt-text');
+    if (textSpan) textSpan.textContent = isOpening ? 'Details ausblenden' : 'Details einblenden';
+  });
+
+  details.forEach(d => {
+    d.classList.toggle('open', isOpening);
+  });
+}

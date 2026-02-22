@@ -15,22 +15,22 @@
 // ══════════════════════════════════════════════════════════════════
 
 const PREISKATALOG = {
-  abrechnungsmodul: {
-    L: { einmalig_pro_ne: 50, jaehrlich_pro_ne: 84, label: "Voll (halbjährl. PDF + 2 Mahnläufe)" },
-    M: { einmalig_pro_ne: 50, jaehrlich_pro_ne: 36, label: "Standard (PDF Versand)" },
-    S: { einmalig_pro_ne: 25, jaehrlich_pro_ne: 24, label: "Basis (für Liegenschaftsverwaltung)" }
-  },
-  server: {
-    S: { einmalig: 1950, jaehrlich: 48, max_ne: 15, label: "Solarmanager ≤15 NE" },
-    M: { einmalig: 2950, jaehrlich: 120, max_ne: 999, label: "Invisia Server >15 NE" }
-  },
-  portal:         { einmalig: 600,  jaehrlich: 121 },
-  internetzugang: { einmalig: 400,  jaehrlich: 44 },
-  einbau_server:  { einmalig: 500 },
-  zaehler:        { einmalig_pro_stueck: 350 },
-  vertrag:        { einmalig_basis: 500, zusatz_pro_tl: 50, inkl_tl: 10 },
-  begehung:       { einmalig: 300 },
-  machbarkeit:    { einmalig: 250 }
+    abrechnungsmodul: {
+        L: { einmalig_pro_ne: 50, jaehrlich_pro_ne: 84, label: "Voll (halbjährl. PDF + 2 Mahnläufe)" },
+        M: { einmalig_pro_ne: 50, jaehrlich_pro_ne: 36, label: "Standard (PDF Versand)" },
+        S: { einmalig_pro_ne: 25, jaehrlich_pro_ne: 24, label: "Basis (für Liegenschaftsverwaltung)" }
+    },
+    server: {
+        S: { einmalig: 1950, jaehrlich: 48, max_ne: 15, label: "Solarmanager ≤15 NE" },
+        M: { einmalig: 2950, jaehrlich: 120, max_ne: 999, label: "Invisia Server >15 NE" }
+    },
+    portal: { einmalig: 600, jaehrlich: 121 },
+    internetzugang: { einmalig: 400, jaehrlich: 44 },
+    einbau_server: { einmalig: 500 },
+    zaehler: { einmalig_pro_stueck: 350 },
+    vertrag: { einmalig_basis: 500, zusatz_pro_tl: 50, inkl_tl: 10 },
+    begehung: { einmalig: 300 },
+    machbarkeit: { einmalig: 250 }
 };
 
 const TARIFE = {
@@ -41,6 +41,8 @@ const TARIFE = {
                 sp: 33.06,         // ElCom H4 2026
                 ev: 6.00,          // Gesetzliche Mindestvergütung 2026
                 ev_quelle: 'Mindestvergütung',
+                ev_lokal: 12.00,   // Realistischer lokaler Tarif (geschätzt)
+                ev_lokal_quelle: 'Durchschnitt EWB',
                 zt: 26.45,         // 80% von 33.06
                 zm: 7.00
             }
@@ -53,6 +55,8 @@ const TARIFE = {
                 sp: 27.70,         // ElCom H4 2026
                 ev: 6.00,          // Gesetzliche Mindestvergütung 2026
                 ev_quelle: 'Mindestvergütung',
+                ev_lokal: 11.50,   // Realistischer lokaler Tarif (geschätzt)
+                ev_lokal_quelle: 'Durchschnitt BKW',
                 zt: 22.16,         // 80% von 27.70
                 zm: 6.58
             }
@@ -65,6 +69,8 @@ const TARIFE = {
                 sp: 25.20,         // ElCom H4 2026
                 ev: 6.00,          // Gesetzliche Mindestvergütung 2026
                 ev_quelle: 'Mindestvergütung',
+                ev_lokal: 12.50,   // Realistischer lokaler Tarif (geschätzt)
+                ev_lokal_quelle: 'Durchschnitt CKW',
                 zt: 20.16,         // 80% von 25.20
                 zm: 6.50
             }
@@ -77,6 +83,8 @@ const TARIFE = {
                 sp: 37.91,         // ElCom H4 2026
                 ev: 6.00,          // Gesetzliche Mindestvergütung 2026
                 ev_quelle: 'Mindestvergütung',
+                ev_lokal: 13.00,   // Realistischer lokaler Tarif (geschätzt)
+                ev_lokal_quelle: 'Durchschnitt IWB',
                 zt: 30.33,         // 80% von 37.91
                 zm: 4.86
             }
@@ -96,6 +104,8 @@ const CH_DURCHSCHNITT = {
     sp: 32.14,
     ev: 6.00,           // Gesetzliche Mindestvergütung 2026
     ev_quelle: 'Mindestvergütung',
+    ev_lokal: 12.00,    // Realistischer Schweizer Durchschnitt
+    ev_lokal_quelle: 'CH Durchschnitt 2024 (geschätzt)',
     zt: 25.71,
     zm: 5.00
 };

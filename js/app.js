@@ -91,8 +91,65 @@ function onRoofSlider() {
   syncKwp();
 }
 
+window.evType = 'min';
+window.lastOperatorName = '';
+
+function setEvType(type) {
+  window.evType = type;
+  document.getElementById('ev-min').classList.toggle('on', type === 'min');
+  document.getElementById('ev-lokal').classList.toggle('on', type === 'lokal');
+  if (typeof T !== 'undefined' && T) updateEvValue();
+}
+
+function updateEvValue() {
+  if (typeof T === 'undefined' || !T) return;
+
+  let localEv = CH_DURCHSCHNITT.ev_lokal;
+  let localQuelle = CH_DURCHSCHNITT.ev_lokal_quelle;
+
+  if (window.lastOperatorName) {
+    const opLower = window.lastOperatorName.toLowerCase();
+    for (const [key, val] of Object.entries(OPERATOR_MAP)) {
+      if (opLower.includes(key)) {
+        const src = Object.values(TARIFE[val].tarife)[0];
+        localEv = src.ev_lokal || localEv;
+        localQuelle = src.ev_lokal_quelle || localQuelle;
+        break;
+      }
+    }
+  }
+
+  if (window.evType === 'lokal') {
+    T.ev = localEv;
+    T.ev_quelle = localQuelle;
+    if (typeof tariffSource !== 'undefined') tariffSource.ev = { value: T.ev, source: localQuelle, type: 'lokal' };
+  } else {
+    T.ev = 6.00;
+    T.ev_quelle = 'Mindestvergütung';
+    if (typeof tariffSource !== 'undefined') tariffSource.ev = { value: T.ev, source: `Gesetzliche Mindestvergütung (Stromgesetz 2026)`, type: 'minimum' };
+  }
+
+  const evUiElement = document.getElementById('no-ev-label');
+  if (evUiElement) evUiElement.textContent = T.ev.toFixed(2);
+
+  const grid = document.getElementById('tariffGrid');
+  if (grid) {
+    const spans = grid.querySelectorAll('span');
+    spans.forEach(span => {
+      if (span.innerHTML.includes('Einspeiseverg')) {
+        const label = window.evType === 'lokal' ? 'Lokal' : 'Minimum';
+        span.nextElementSibling.innerHTML = `${T.ev.toFixed(2)} Rp/kWh <em style="font-size:9px;color:var(--muted)">(${label})</em>`;
+      }
+    });
+  }
+
+  updateTariffPopup();
+  calc();
+}
+
 // Apply tariff data to the calculator and UI
 function applyTariff(operatorName, totalRp, energyRp, gridusageRp, chargeRp, aidfeeRp) {
+  window.lastOperatorName = operatorName;
   T = {
     sp: totalRp,
     ev: 6.00, // Einspeisevergütung: min 6 Rp/kWh nach neuem Stromgesetz 2026
@@ -128,13 +185,13 @@ function applyTariff(operatorName, totalRp, energyRp, gridusageRp, chargeRp, aid
     ev: { value: T.ev, source: `Gesetzliche Mindestverg\u00FCtung (Stromgesetz 2026)`, type: 'minimum' },
     zt: { value: T.zt, source: `Berechnet: ${T.sp.toFixed(2)} \u00D7 80% = ${T.zt.toFixed(2)} Rp/kWh`, type: 'geschaetzt' }
   };
-  updateTariffPopup();
-  calc();
+  updateEvValue();
 }
 
 // Show operator-only info (fallback: match against hardcoded TARIFE, or use Swiss avg)
 
 function applyOperatorOnly(operatorName) {
+  window.lastOperatorName = operatorName;
   const info = document.getElementById('tariffInfo');
   const opLower = operatorName.toLowerCase();
 
@@ -205,8 +262,7 @@ function applyOperatorOnly(operatorName) {
       zt: { value: T.zt, source: `Berechnet: ${T.sp.toFixed(2)} \u00D7 80% = ${T.zt.toFixed(2)} Rp/kWh`, type: 'geschaetzt' }
     };
   }
-  updateTariffPopup();
-  calc();
+  updateEvValue();
 }
 
 function syncKwp() {

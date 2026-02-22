@@ -278,6 +278,18 @@
           </div>
         </div>
 
+        <div class="field" style="margin-top:24px;">
+          <div class="field-label" style="display:flex; justify-content:space-between; align-items:center;">
+            <span>Einspeisevergütung</span>
+            <span class="tip"
+              data-tip="Gesetzliches Minimum ab 2026 vs. durchschnittlicher/lokaler Rückliefertarif">?</span>
+          </div>
+          <div class="toggles">
+            <button class="tog on" id="ev-min" onclick="setEvType('min')">Minimal (6 Rp)</button>
+            <button class="tog" id="ev-lokal" onclick="setEvType('lokal')">Lokal / Real</button>
+          </div>
+        </div>
+
       </div>
 
       <div class="sb-section">

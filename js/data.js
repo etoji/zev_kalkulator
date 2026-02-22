@@ -14,6 +14,25 @@
 // Aktualisierung: Jährlich im September/Oktober, wenn ElCom neue Tarife publiziert
 // ══════════════════════════════════════════════════════════════════
 
+const PREISKATALOG = {
+  abrechnungsmodul: {
+    L: { einmalig_pro_ne: 50, jaehrlich_pro_ne: 84, label: "Voll (halbjährl. PDF + 2 Mahnläufe)" },
+    M: { einmalig_pro_ne: 50, jaehrlich_pro_ne: 36, label: "Standard (PDF Versand)" },
+    S: { einmalig_pro_ne: 25, jaehrlich_pro_ne: 24, label: "Basis (für Liegenschaftsverwaltung)" }
+  },
+  server: {
+    S: { einmalig: 1950, jaehrlich: 48, max_ne: 15, label: "Solarmanager ≤15 NE" },
+    M: { einmalig: 2950, jaehrlich: 120, max_ne: 999, label: "Invisia Server >15 NE" }
+  },
+  portal:         { einmalig: 600,  jaehrlich: 121 },
+  internetzugang: { einmalig: 400,  jaehrlich: 44 },
+  einbau_server:  { einmalig: 500 },
+  zaehler:        { einmalig_pro_stueck: 350 },
+  vertrag:        { einmalig_basis: 500, zusatz_pro_tl: 50, inkl_tl: 10 },
+  begehung:       { einmalig: 300 },
+  machbarkeit:    { einmalig: 250 }
+};
+
 const TARIFE = {
     ewb: {
         tarife: {

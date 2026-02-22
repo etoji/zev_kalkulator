@@ -1,5 +1,5 @@
 ﻿let T = { ...TARIFE.ewb.tarife.ewb_basis };
-const tog = { wp: 'nein', em: 'nein', ma: 'nein', zv: 'nein' };
+const tog = { wp: 'nein', em: 'nein', bo: 'nein', ma: 'nein', zv: 'nein', po: 'ja', iz: 'ja', be: 'ja' };
 
 // Track source of each tariff component for the popup
 let tariffSource = {
@@ -661,12 +661,52 @@ function calc() {
   const p25 = pro * 25 * 0.8;
   const hk = p25 > 0 ? tk25 / p25 : 0;
 
-  // ZEV Kosten
-  const wez = we + 1 + (tog.wp === 'ja' ? 1 : 0) + (tog.em === 'ja' ? 1 : 0);
-  const varE = wez * 400;
-  const grE = we <= 10 ? 4750 : 6700;
-  const totE = grE + varE + (tog.ma === 'ja' ? 250 : 0) + (tog.zv === 'ja' ? 500 : 0);
-  const totW = 121 + (we + 1) * 84;
+  // Variables from UI
+  const modul = document.getElementById('modulSelect').value || 'L';
+  const hasBoiler = tog.bo === 'ja';
+
+  // Number of meters (Wohneinheiten + 1 Allgemein + WP + eMobilität + Boiler)
+  const anzahlNe = we + 1; // Number of billing units
+  const anzahlZaehler = we + 1 + (tog.wp === 'ja' ? 1 : 0) + (tog.em === 'ja' ? 1 : 0) + (hasBoiler ? 1 : 0);
+
+  // Server Type (S <= 15 NE, M > 15 NE)
+  const serverTyp = (we <= 15) ? 'S' : 'M';
+
+  // --- ZEV Kosten Einmalig ---
+
+  // Vertragskosten
+  const vertragInkl = PREISKATALOG.vertrag.inkl_tl;
+  const vertragZusatz = Math.max(0, we - vertragInkl) * PREISKATALOG.vertrag.zusatz_pro_tl;
+  const vertragKosten = PREISKATALOG.vertrag.einmalig_basis + vertragZusatz;
+
+  // Grundkosten
+  const grundkostenEinmalig =
+    PREISKATALOG.server[serverTyp].einmalig
+    + PREISKATALOG.einbau_server.einmalig
+    + (tog.po === 'ja' ? PREISKATALOG.portal.einmalig : 0)
+    + (tog.iz === 'ja' ? PREISKATALOG.internetzugang.einmalig : 0)
+    + (tog.ma === 'ja' ? PREISKATALOG.machbarkeit.einmalig : 0)
+    + (tog.be === 'ja' ? PREISKATALOG.begehung.einmalig : 0)
+    + (tog.zv === 'ja' ? vertragKosten : 0);
+
+  // Variable Kosten (pro Zähler)
+  const kostenProZaehlerEinmalig =
+    PREISKATALOG.zaehler.einmalig_pro_stueck
+    + PREISKATALOG.abrechnungsmodul[modul].einmalig_pro_ne;
+
+  const variableKostenEinmalig = anzahlZaehler * kostenProZaehlerEinmalig;
+
+  const totE = grundkostenEinmalig + variableKostenEinmalig; // Total Einmalig
+
+  // --- ZEV Kosten Wiederkehrend (pro Jahr) ---
+  const grundkostenJaehrlich =
+    PREISKATALOG.server[serverTyp].jaehrlich
+    + (tog.po === 'ja' ? PREISKATALOG.portal.jaehrlich : 0)
+    + (tog.iz === 'ja' ? PREISKATALOG.internetzugang.jaehrlich : 0);
+
+  const variableKostenJaehrlich = anzahlNe * PREISKATALOG.abrechnungsmodul[modul].jaehrlich_pro_ne;
+
+  const totW = grundkostenJaehrlich + variableKostenJaehrlich; // Total Wiederkehrend
 
   // Ohne ZEV (fixed 20/80)
   const no_e_kwh = pro * 0.20;
@@ -689,7 +729,7 @@ function calc() {
   // Mieter
   const m_str = (z_z_kwh / we) * (sp - zt);
   const m_zk = T.zm * 12;
-  const m_zev = -84;
+  const m_zev = -PREISKATALOG.abrechnungsmodul[modul].jaehrlich_pro_ne; // Mieter pays the recurring billing fee
   const m_tot = m_str + m_zk + m_zev;
 
   // Flow section
@@ -825,14 +865,37 @@ function calc() {
     crossLeg.style.display = 'none';
   }
 
-  // Kosten
+  // Kosten UI Updates
   set('k-einmalig', f(totE) + ' CHF');
-  set('k-var', f(varE));
-  set('k-zev-e', f(we * 50));
-  set('k-ma', tog.ma === 'ja' ? '250' : '\u2014');
-  set('k-zv', tog.zv === 'ja' ? '500' : '\u2014');
+
+  // Build dynamic HTML for Einmalige Kosten
+  let eHtml = '';
+  const makeRow = (lbl, val) => `<div class="kost-row"><span class="kr-label">${lbl}</span><span class="kr-val">${val}</span></div>`;
+
+  eHtml += makeRow(`Server & Grundsetup (${PREISKATALOG.server[serverTyp].label})`, f(PREISKATALOG.server[serverTyp].einmalig + PREISKATALOG.einbau_server.einmalig));
+  eHtml += makeRow(`Hardware & Setup pro WE+1 (${anzahlZaehler}x)`, f(variableKostenEinmalig));
+
+  // Use a helper to check toggle state (defaults to "nein" if not set initially)
+  const isToggled = (key) => (tog[key] || 'nein') === 'ja';
+
+  if (isToggled('po')) eHtml += makeRow('PV & EMS Nutzerportal', f(PREISKATALOG.portal.einmalig));
+  if (isToggled('iz')) eHtml += makeRow('Internetzugang Server', f(PREISKATALOG.internetzugang.einmalig));
+  if (isToggled('ma')) eHtml += makeRow('Machbarkeitsabklärung', f(PREISKATALOG.machbarkeit.einmalig));
+  if (isToggled('be')) eHtml += makeRow('Begehung vor Ort', f(PREISKATALOG.begehung.einmalig));
+  if (isToggled('zv')) eHtml += makeRow('ZEV Vertragserstellung', f(vertragKosten));
+
+  document.getElementById('kosten-einmalig-rows').innerHTML = eHtml;
+
+  // Build dynamic HTML for Wiederkehrende Kosten
   set('k-wiederk', f(totW) + ' CHF');
-  set('k-zev-j', f((we + 1) * 84));
+
+  let wHtml = '';
+  wHtml += makeRow(`Server Abo (${PREISKATALOG.server[serverTyp].label})`, f(PREISKATALOG.server[serverTyp].jaehrlich));
+  if (isToggled('po')) wHtml += makeRow('PV & EMS Nutzerportal', f(PREISKATALOG.portal.jaehrlich));
+  if (isToggled('iz')) wHtml += makeRow('Internetzugang Server', f(PREISKATALOG.internetzugang.jaehrlich));
+  wHtml += makeRow(`Abrechnungsmodul (${PREISKATALOG.abrechnungsmodul[modul].label})`, f(variableKostenJaehrlich));
+
+  document.getElementById('kosten-wiederkehrend-rows').innerHTML = wHtml;
 
   // Mieter
   set('m-strom', f(m_str, 2) + ' CHF');

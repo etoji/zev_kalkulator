@@ -299,6 +299,13 @@
       max-width: 200px;
     }
 
+    .field-label .tip.tip-right:hover::after {
+      left: auto;
+      right: 0;
+      transform: none;
+    }
+
+
     .ctrl {
       display: flex;
       align-items: center;

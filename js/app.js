@@ -608,11 +608,43 @@ function f(v, dec = 0) {
 }
 function set(id, v) { const e = document.getElementById(id); if (e) e.textContent = v; }
 
+function clearCalc() {
+  const ids = [
+    'f-prod', 'f-prod2', 'f-no-e-kwh', 'f-no-e-chf', 'f-no-ei-kwh', 'f-no-ei-chf',
+    'f-zev-e-kwh', 'f-zev-e-chf', 'f-zev-z-kwh', 'f-zev-z-chf', 'f-zev-ei-kwh', 'f-zev-ei-chf',
+    'f-zev-pct', 'f-einspeis-pct', 'no-cf', 'no-amor', 'no-e-kwh', 'no-e-chf', 'no-ei-kwh',
+    'no-ei-chf', 'zev-cf', 'zev-amor', 'zev-e-kwh', 'zev-e-chf', 'zev-z-kwh', 'zev-z-chf',
+    'zev-ei-kwh', 'zev-ei-chf', 'zev-z-pct', 'zev-ei-pct', 'delta-chf',
+    'y25-no-ein', 'y25-no-inv', 'y25-no-amor', 'y25-no-total',
+    'y25-zev-ein', 'y25-zev-inv', 'y25-zev-op', 'y25-zev-amor', 'y25-zev-total',
+    'k-einmalig', 'k-var', 'k-zev-e', 'k-ma', 'k-zv', 'k-wiederk', 'k-zev-j',
+    'm-strom', 'm-zaehler', 'm-zev', 'm-total',
+    'hk-invest', 'hk-unterhalt', 'hk-prod', 'hk-kwh', 'hk-kwh2', 'wb-val'
+  ];
+  ids.forEach(id => set(id, '\u2014'));
+  set('delta-desc', 'Bitte f\u00FCllen Sie die Anlage- und Investitionsdaten in der Seitenleiste aus, um Resultate zu berechnen.');
+
+  const wbTitle = document.getElementById('wb-title');
+  if (wbTitle) wbTitle.textContent = 'Berechnung ausstehend';
+  const wbDesc = document.getElementById('wb-desc');
+  if (wbDesc) wbDesc.textContent = 'Es werden Anlagedaten ben\u00F6tigt, um den Ertrag \u00FCber 25 Jahre zu berechnen.';
+
+  const chartEl = document.getElementById('timeline-chart');
+  if (chartEl) chartEl.innerHTML = '';
+  const crossLeg = document.getElementById('tl-crossover-leg');
+  if (crossLeg) crossLeg.style.display = 'none';
+}
+
 function calc() {
   const we = +document.getElementById('anzahlWE').value || 1;
   const off = +document.getElementById('offerte').value || 0;
   const foe = +document.getElementById('foerderung').value || 0;
   const pro = +document.getElementById('produktion').value || 0;
+
+  if (off === 0 || pro === 0) {
+    clearCalc();
+    return;
+  }
 
   const pctZev = +document.getElementById('sl-split').value;
   const pctEi = 80 - pctZev;
@@ -713,14 +745,16 @@ function calc() {
 
   const gain25diff = zev_total25 - no_total25;
 
-  set('y25-no-ein', '+' + f(Math.round(no_ein25)) + ' CHF');
-  set('y25-no-inv', '\u2212' + f(Math.round(inv)) + ' CHF');
+  const signNoEin = no_ein25 < 0 ? '\u2212' : '+';
+  set('y25-no-ein', signNoEin + f(Math.abs(Math.round(no_ein25))) + ' CHF');
+  set('y25-no-inv', '\u2212' + f(Math.abs(Math.round(inv))) + ' CHF');
   set('y25-no-amor', f(no_amor, 1) + ' Jahre');
   set('y25-no-total', f(Math.round(no_total25)) + ' CHF');
 
-  set('y25-zev-ein', '+' + f(Math.round(zev_ein25)) + ' CHF');
-  set('y25-zev-inv', '\u2212' + f(Math.round(zev_inv25)) + ' CHF');
-  set('y25-zev-op', '\u2212' + f(Math.round(totW * yrs)) + ' CHF');
+  const signZevEin = zev_ein25 < 0 ? '\u2212' : '+';
+  set('y25-zev-ein', signZevEin + f(Math.abs(Math.round(zev_ein25))) + ' CHF');
+  set('y25-zev-inv', '\u2212' + f(Math.abs(Math.round(zev_inv25))) + ' CHF');
+  set('y25-zev-op', '\u2212' + f(Math.abs(Math.round(totW * yrs))) + ' CHF');
   set('y25-zev-amor', (z_amor > 0 ? f(z_amor, 1) : '\u2014') + ' Jahre');
   set('y25-zev-total', f(Math.round(zev_total25)) + ' CHF');
 

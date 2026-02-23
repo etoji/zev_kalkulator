@@ -1203,3 +1203,177 @@ function switchTab(tabId) {
 
 // Default state: hide detailed section nav initially
 document.getElementById('sectionNav').style.display = 'none';
+
+// ══════════════════════════════════════════════════════════════════
+// CO₂-Fussabdruck — Electricity Maps Integration
+// ══════════════════════════════════════════════════════════════════
+
+const CO2 = {
+  API_BASE: 'https://api.electricitymap.org/v3',
+  API_KEY: 'vznExkmHd5EKqUe6DUdl',
+  ZONE: 'CH',
+  PV_LIFECYCLE: 26, // gCO2eq/kWh (IPCC median for crystalline silicon PV)
+  FALLBACK_GRID: 70, // gCO2eq/kWh (Swiss average fallback)
+
+  _cache: null,
+  _cacheTime: 0,
+  _mixCache: null,
+  CACHE_MS: 60 * 60 * 1000, // 1 hour
+
+  async getIntensity() {
+    if (this._cache && (Date.now() - this._cacheTime < this.CACHE_MS)) {
+      return this._cache;
+    }
+    try {
+      const r = await fetch(`${this.API_BASE}/carbon-intensity/latest?zone=${this.ZONE}`, {
+        headers: { 'auth-token': this.API_KEY }
+      });
+      if (!r.ok) throw new Error(r.status);
+      const d = await r.json();
+      this._cache = { intensity: d.carbonIntensity, datetime: d.datetime, live: true };
+      this._cacheTime = Date.now();
+      return this._cache;
+    } catch (e) {
+      console.warn('Electricity Maps API error:', e);
+      return { intensity: this.FALLBACK_GRID, datetime: null, live: false };
+    }
+  },
+
+  async getPowerBreakdown() {
+    if (this._mixCache && (Date.now() - this._cacheTime < this.CACHE_MS)) {
+      return this._mixCache;
+    }
+    try {
+      const r = await fetch(`${this.API_BASE}/power-breakdown/latest?zone=${this.ZONE}`, {
+        headers: { 'auth-token': this.API_KEY }
+      });
+      if (!r.ok) throw new Error(r.status);
+      const d = await r.json();
+      this._mixCache = d;
+      return d;
+    } catch (e) {
+      console.warn('Power breakdown error:', e);
+      return null;
+    }
+  },
+
+  calculate(produktionKwh, gridCO2) {
+    const diffG = Math.max(0, gridCO2 - this.PV_LIFECYCLE);
+    const savingKg = (produktionKwh * diffG) / 1000;
+    const saving25t = (savingKg * 25) / 1000;
+    return {
+      savingKgYear: Math.round(savingKg),
+      saving25Tonnes: saving25t.toFixed(1),
+      gridCO2,
+      diffG,
+      autoKm: Math.round(savingKg / 0.12),        // ~120g CO2/km
+      trees: Math.round(savingKg / 12.5),           // ~12.5 kg CO2/tree/year
+      flights: (savingKg / 500).toFixed(1)           // ~500kg per ZH-Mallorca return
+    };
+  }
+};
+
+// Update CO2 display — called after calc()
+async function updateCO2() {
+  const pro = +document.getElementById('produktion').value || 0;
+  if (pro === 0) return;
+
+  const grid = await CO2.getIntensity();
+
+  const result = CO2.calculate(pro, grid.intensity);
+
+  // Hero card
+  set('co2-saving-year', f(result.savingKgYear));
+  set('co2-saving-25y', result.saving25Tonnes);
+  set('co2-grid-intensity', f(Math.round(grid.intensity)));
+
+  // Live badge
+  const badge = document.getElementById('co2-live-badge');
+  if (badge) badge.style.display = grid.live ? 'flex' : 'none';
+
+  // Comparisons
+  const cmpEl = document.getElementById('co2-comparisons');
+  if (cmpEl && result.savingKgYear > 0) {
+    cmpEl.style.display = 'flex';
+    set('co2-cmp-auto', f(result.autoKm));
+    set('co2-cmp-trees', f(result.trees));
+    set('co2-cmp-flights', result.flights);
+  }
+
+  // Source
+  const srcEl = document.getElementById('co2-source');
+  if (srcEl) {
+    if (grid.live && grid.datetime) {
+      const dt = new Date(grid.datetime);
+      srcEl.textContent = `Electricity Maps · CH · ${dt.toLocaleString('de-CH', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' })}`;
+    } else {
+      srcEl.textContent = 'Electricity Maps · CH · Durchschnittswert (offline)';
+    }
+  }
+
+  // Detail section
+  set('co2d-grid', f(Math.round(grid.intensity)) + ' gCO₂eq/kWh');
+  set('co2d-diff', f(Math.round(result.diffG)) + ' gCO₂eq/kWh');
+  set('co2d-prod', f(pro) + ' kWh/Jahr');
+  set('co2d-saving', f(result.savingKgYear) + ' kg CO₂/Jahr');
+  set('co2d-saving25', result.saving25Tonnes + ' Tonnen CO₂');
+
+  // Power mix
+  updatePowerMix();
+}
+
+async function updatePowerMix() {
+  const mix = await CO2.getPowerBreakdown();
+  const container = document.getElementById('co2-mix-bars');
+  if (!container || !mix) return;
+
+  const consumption = mix.powerConsumptionBreakdown || {};
+  const total = mix.powerConsumptionTotal || 0;
+  if (total <= 0) return;
+
+  // Define display order and colors
+  const sources = [
+    { key: 'hydro', label: 'Wasserkraft', color: '#3B82F6' },
+    { key: 'nuclear', label: 'Kernenergie', color: '#8B5CF6' },
+    { key: 'solar', label: 'Solar', color: '#F59E0B' },
+    { key: 'wind', label: 'Wind', color: '#06B6D4' },
+    { key: 'biomass', label: 'Biomasse', color: '#22C55E' },
+    { key: 'gas', label: 'Gas', color: '#EF4444' },
+    { key: 'coal', label: 'Kohle', color: '#6B7280' },
+    { key: 'geothermal', label: 'Geothermie', color: '#D97706' },
+    { key: 'unknown', label: 'Andere', color: '#9CA3AF' }
+  ];
+
+  let html = '';
+  sources.forEach(s => {
+    const val = consumption[s.key] || 0;
+    if (val <= 0) return;
+    const pct = (val / total * 100).toFixed(1);
+    html += `
+      <div class="co2-mix-row">
+        <span class="co2-mix-label">${s.label}</span>
+        <div class="co2-mix-track">
+          <div class="co2-mix-fill" style="width:${pct}%; background:${s.color}"></div>
+        </div>
+        <span class="co2-mix-pct">${pct}%</span>
+      </div>`;
+  });
+
+  container.innerHTML = html;
+
+  const timeEl = document.getElementById('co2-mix-time');
+  if (timeEl && mix.datetime) {
+    const dt = new Date(mix.datetime);
+    timeEl.textContent = `Stand: ${dt.toLocaleString('de-CH')} · Quelle: Electricity Maps`;
+  }
+}
+
+// Hook CO2 update into the main calc function
+const _origCalc = calc;
+calc = function () {
+  _origCalc();
+  updateCO2();
+};
+
+// Initial fetch on load
+updateCO2();

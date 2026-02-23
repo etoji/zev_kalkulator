@@ -850,6 +850,64 @@ function calc() {
     set('delta-desc', `Ohne ZEV erzielen Sie ${f(Math.round(Math.abs(diff)))} CHF mehr Einnahmen pro Jahr. ZEV reduziert Ihre j\u00E4hrliche Rendite um ${f(Math.abs(diff / no_cf * 100), 1)}%.`);
   }
 
+  // Hero Card 1 (Cashflow)
+  const hcCfNoBox = document.getElementById('hc-cf-no-box');
+  if (hcCfNoBox) {
+    const zevWinsCf = z_cf >= no_cf;
+    set('hc-cf-no-val', f(Math.round(no_cf)) + ' CHF');
+    hcCfNoBox.className = 'hc-side ' + (zevWinsCf ? 'is-loser' : 'is-winner');
+    document.getElementById('hc-cf-no-badge').style.display = zevWinsCf ? 'none' : 'inline-block';
+
+    set('hc-cf-zev-val', f(Math.round(z_cf)) + ' CHF');
+    document.getElementById('hc-cf-zev-box').className = 'hc-side ' + (zevWinsCf ? 'is-winner' : 'is-loser');
+    document.getElementById('hc-cf-zev-badge').style.display = zevWinsCf ? 'inline-block' : 'none';
+
+    const cfBadge = document.getElementById('hc-rendite-badge');
+    if (cfBadge) {
+      cfBadge.textContent = `Differenz: ${(diff >= 0 ? '+' : '\u2212')} ${f(Math.round(Math.abs(diff)))} CHF / Jahr`;
+      cfBadge.className = diff >= 0 ? 'hc-foot-pos' : 'hc-foot-neg';
+    }
+  }
+
+  // Hero Card 2 (Amortisation)
+  const hcAmNoBox = document.getElementById('hc-am-no-box');
+  if (hcAmNoBox) {
+    const fmtAmor = (val) => (val > 0 && val < 99) ? f(val, 1) + ' Jahre' : '> 25 Jahre';
+    const aNo = (no_amor > 0 && no_amor < 99) ? no_amor : Infinity;
+    const aZev = (z_amor > 0 && z_amor < 99) ? z_amor : Infinity;
+
+    // ZEV wins if its amortization is lower or equal, AND it's not infinity
+    const zevWinsAmor = (aZev <= aNo) && (aZev !== Infinity);
+    const noWinsAmor = (aNo < aZev) && (aNo !== Infinity);
+
+    set('hc-am-no-val', fmtAmor(no_amor));
+    hcAmNoBox.className = 'hc-side ' + (noWinsAmor ? 'is-winner' : (zevWinsAmor ? 'is-loser' : ''));
+    document.getElementById('hc-am-no-badge').style.display = noWinsAmor ? 'inline-block' : 'none';
+
+    set('hc-am-zev-val', fmtAmor(z_amor));
+    document.getElementById('hc-am-zev-box').className = 'hc-side ' + (zevWinsAmor ? 'is-winner' : (noWinsAmor ? 'is-loser' : ''));
+    document.getElementById('hc-am-zev-badge').style.display = zevWinsAmor ? 'inline-block' : 'none';
+
+    const amBadge = document.getElementById('hc-am-badge');
+    if (amBadge) {
+      if (aNo === Infinity && aZev === Infinity) {
+        amBadge.textContent = 'Beide unwirtschaftlich';
+        amBadge.className = 'hc-foot-neg';
+      } else if (aNo === Infinity) {
+        amBadge.textContent = 'Ohne ZEV nicht amortisierbar';
+        amBadge.className = 'hc-foot-pos';
+      } else if (aZev === Infinity) {
+        amBadge.textContent = 'Mit ZEV nicht amortisierbar';
+        amBadge.className = 'hc-foot-neg';
+      } else {
+        const amDiff = aZev - aNo;
+        // If amDiff > 0, ZEV takes longer, which is worse for ZEV -> Negative badge.
+        amBadge.textContent = `Differenz: ${(amDiff > 0 ? '+' : '\u2212')} ${f(Math.abs(amDiff), 1)} Jahre`;
+        amBadge.className = amDiff <= 0 ? 'hc-foot-pos' : 'hc-foot-neg';
+      }
+    }
+  }
+
   // \u2500\u2500 25 JAHRE \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
   const yrs = 25;
   const no_ein25 = no_cf * yrs;
@@ -873,6 +931,27 @@ function calc() {
   set('y25-zev-op', '\u2212' + f(Math.abs(Math.round(totW * yrs))) + ' CHF');
   set('y25-zev-amor', (z_amor > 0 ? f(z_amor, 1) : '\u2014') + ' Jahre');
   set('y25-zev-total', f(Math.round(zev_total25)) + ' CHF');
+
+  // Hero Card 3 (25 Jahre Profit)
+  const hc25NoBox = document.getElementById('hc-25-no-box');
+  if (hc25NoBox) {
+    const zevWins25 = zev_total25 >= no_total25;
+
+    set('hc-25-no-val', f(Math.round(no_total25)) + ' CHF');
+    hc25NoBox.className = 'hc-side ' + (zevWins25 ? 'is-loser' : 'is-winner');
+    document.getElementById('hc-25-no-badge').style.display = zevWins25 ? 'none' : 'inline-block';
+
+    set('hc-25-zev-val', f(Math.round(zev_total25)) + ' CHF');
+    document.getElementById('hc-25-zev-box').className = 'hc-side ' + (zevWins25 ? 'is-winner' : 'is-loser');
+    document.getElementById('hc-25-zev-badge').style.display = zevWins25 ? 'inline-block' : 'none';
+
+    const y25Badge = document.getElementById('hc-25-badge');
+    if (y25Badge) {
+      const y25Diff = zev_total25 - no_total25;
+      y25Badge.textContent = `Differenz: ${(y25Diff >= 0 ? '+' : '\u2212')} ${f(Math.round(Math.abs(y25Diff)))} CHF`;
+      y25Badge.className = y25Diff >= 0 ? 'hc-foot-pos' : 'hc-foot-neg';
+    }
+  }
 
   // Winner box & Dynamic Styling
   set('wb-val', f(Math.round(Math.abs(gain25diff))));
@@ -1012,6 +1091,27 @@ function calc() {
   set('m-zev', f(m_zev, 2) + ' CHF');
   set('m-total', f(m_tot, 2) + ' CHF');
 
+  // Hero Card 4 (Mieter Ersparnis per Jahr)
+  const hcMiZevBox = document.getElementById('hc-mi-zev-box');
+  if (hcMiZevBox) {
+    const zevWinsMieter = m_tot > 0;
+
+    set('hc-mi-zev-val', f(m_tot, 2) + ' CHF');
+    hcMiZevBox.className = 'hc-side ' + (zevWinsMieter ? 'is-winner' : 'is-loser');
+    document.getElementById('hc-mi-zev-badge').style.display = zevWinsMieter ? 'inline-block' : 'none';
+
+    document.getElementById('hc-mi-no-box').className = 'hc-side ' + (!zevWinsMieter ? 'is-winner' : 'is-loser');
+
+    const miBadge = document.getElementById('hc-mi-badge');
+    if (zevWinsMieter) {
+      miBadge.textContent = 'Win-Win für alle Parteien';
+      miBadge.className = 'hc-foot-pos';
+    } else {
+      miBadge.textContent = 'Keine Ersparnis für Mieter';
+      miBadge.className = 'hc-foot-neg';
+    }
+  }
+
   // HK
   set('hk-invest', f(inv) + ' CHF');
   set('hk-unterhalt', f(Math.round(uh25)) + ' CHF');
@@ -1071,3 +1171,16 @@ function toggleRenditeDetails() {
     d.classList.toggle('open', isOpening);
   });
 }
+
+// ── Tabs (Übersicht vs Details) ──
+function switchTab(tabId) {
+  document.getElementById('tab-summary').style.display = (tabId === 'summary') ? 'block' : 'none';
+  document.getElementById('tab-details').style.display = (tabId === 'details') ? 'block' : 'none';
+  document.getElementById('btn-tab-summary').classList.toggle('active', tabId === 'summary');
+  document.getElementById('btn-tab-details').classList.toggle('active', tabId === 'details');
+  document.getElementById('sectionNav').style.display = (tabId === 'details') ? 'flex' : 'none';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// Default state: hide detailed section nav initially
+document.getElementById('sectionNav').style.display = 'none';

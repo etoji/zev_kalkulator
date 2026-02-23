@@ -35,28 +35,6 @@
       <div class="tb-live"></div>
     </div>
   </header>
-  <!-- ── Section Navigation (Full Width) ── -->
-  <nav class="section-nav" id="sectionNav">
-    <a class="nav-pill active" href="#rendite" onclick="scrollToSection(event,'rendite')">
-      <span class="nav-pill-num">1</span>Rendite
-    </a>
-    <a class="nav-pill" href="#langzeit" onclick="scrollToSection(event,'langzeit')">
-      <span class="nav-pill-num">2</span>25 Jahre
-    </a>
-    <a class="nav-pill" href="#stromfluss" onclick="scrollToSection(event,'stromfluss')">
-      <span class="nav-pill-num">3</span>Stromfluss
-    </a>
-    <a class="nav-pill" href="#kosten" onclick="scrollToSection(event,'kosten')">
-      <span class="nav-pill-num">4</span>Kosten
-    </a>
-    <a class="nav-pill" href="#mieter" onclick="scrollToSection(event,'mieter')">
-      <span class="nav-pill-num">5</span>Mieter
-    </a>
-    <a class="nav-pill" href="#herstellkosten" onclick="scrollToSection(event,'herstellkosten')">
-      <span class="nav-pill-num">6</span>Herstellkosten
-    </a>
-  </nav>
-
   <div class="layout">
 
     <!-- ══ SIDEBAR ═══════════════════════════════════ -->
@@ -366,231 +344,140 @@
     <!-- ══ MAIN ════════════════════════════════════════ -->
     <main class="main">
 
-      <!-- ③ STROMFLUSS ───────────────────────────────── -->
-      <section id="rendite">
-        <div class="sh">
-          <div class="sh-num">1</div>
-          <h2>Rendite-Vergleich: Ohne vs. Mit ZEV</h2>
-          <div class="sh-line"></div>
+      <!-- HEADER ROW (Sticky) -->
+      <div class="main-header-row">
+        <!-- TAB SWITCHER -->
+        <div class="tab-switcher">
+          <button class="tab-btn active" onclick="switchTab('summary')" id="btn-tab-summary">Übersicht</button>
+          <button class="tab-btn" onclick="switchTab('details')" id="btn-tab-details">Detailanalyse</button>
         </div>
 
-        <div class="compare-grid">
-          <!-- Ohne ZEV -->
-          <div class="scenario">
-            <div class="sc-head" id="sc-head-A">
-              <div>
-                <div class="sc-label" id="sc-label-A">Szenario A</div>
-                <div class="sc-title">Ohne ZEV</div>
-                <div class="sc-desc">Überschussproduktion direkt ans Netz</div>
+        <!-- ── Section Navigation (Full Width) ── -->
+        <nav class="section-nav" id="sectionNav" style="display:none;">
+          <a class="nav-pill active" href="#rendite" onclick="scrollToSection(event,'rendite')">
+            <span class="nav-pill-num">1</span>Rendite
+          </a>
+          <a class="nav-pill" href="#langzeit" onclick="scrollToSection(event,'langzeit')">
+            <span class="nav-pill-num">2</span>25 Jahre
+          </a>
+          <a class="nav-pill" href="#stromfluss" onclick="scrollToSection(event,'stromfluss')">
+            <span class="nav-pill-num">3</span>Stromfluss
+          </a>
+          <a class="nav-pill" href="#kosten" onclick="scrollToSection(event,'kosten')">
+            <span class="nav-pill-num">4</span>Kosten
+          </a>
+          <a class="nav-pill" href="#mieter" onclick="scrollToSection(event,'mieter')">
+            <span class="nav-pill-num">5</span>Mieter
+          </a>
+          <a class="nav-pill" href="#herstellkosten" onclick="scrollToSection(event,'herstellkosten')">
+            <span class="nav-pill-num">6</span>Herstellkosten
+          </a>
+        </nav>
+      </div>
+
+      <!-- TAB 1: ÜBERSICHT -->
+      <div id="tab-summary" class="tab-content active">
+        <div class="hero-grid">
+          <!-- CARD 1 (PRIMARY): 25 Jahre Gewinn -->
+          <div class="hero-card hc-primary">
+            <div class="hc-top">
+              <div class="hc-icon">📈</div>
+              <div class="hc-title">Gesamtgewinn 25 Jahre</div>
+            </div>
+            <div class="hc-compare">
+              <div class="hc-side" id="hc-25-no-box">
+                <div class="hc-side-lbl">Ohne ZEV<span class="hc-badge" id="hc-25-no-badge"
+                    style="display:none">Tipp</span></div>
+                <div class="hc-side-val" id="hc-25-no-val">—</div>
               </div>
-              <div class="sc-cf">
-                <div class="sc-cf-num" id="no-cf">—</div>
-                <div class="sc-cf-unit">CHF / Jahr Cashflow</div>
+              <div class="hc-vs">vs</div>
+              <div class="hc-side" id="hc-25-zev-box">
+                <div class="hc-side-lbl">Mit ZEV<span class="hc-badge" id="hc-25-zev-badge"
+                    style="display:none">Tipp</span></div>
+                <div class="hc-side-val" id="hc-25-zev-val">—</div>
               </div>
             </div>
-            <div class="sc-amor">
-              <span class="sc-amor-label"><span>⏱</span> Amortisation</span>
-              <span class="sc-amor-val" id="no-amor">—</span>
-            </div>
-            <div class="sc-details-toggle" onclick="toggleRenditeDetails()">
-              <span class="sc-dt-text">Details einblenden</span>
-              <span class="chevron">▼</span>
-            </div>
-            <div class="sc-details" id="details-A">
-              <div class="sc-row">
-                <div class="sc-bar" style="background:var(--strawberry)"></div>
-                <div class="sc-row-body">
-                  <div class="sc-row-name">Eigenverbrauch Haus</div>
-                  <div class="sc-row-desc">Intern genutzter Strom — reduziert den Netzbezug</div>
-                  <div class="sc-row-kwh" id="no-e-kwh">—</div>
-                </div>
-                <div class="sc-pct pct-red">20%</div>
-                <div class="sc-row-chf" id="no-e-chf">—</div>
-              </div>
-              <div class="sc-row">
-                <div class="sc-bar" style="background:var(--cerulean)"></div>
-                <div class="sc-row-body">
-                  <div class="sc-row-name">Einspeisung ins Netz</div>
-                  <div class="sc-row-desc">Sehr tiefer Vergütungstarif (~<span id="no-ev-label">—</span> Rp./kWh)</div>
-                  <div class="sc-row-kwh" id="no-ei-kwh">—</div>
-                </div>
-                <div class="sc-pct pct-blue">80%</div>
-                <div class="sc-row-chf" id="no-ei-chf">—</div>
-              </div>
+            <div class="hc-footer">
+              <span id="hc-25-badge" class="hc-foot-neu">Differenz: —</span>
             </div>
           </div>
 
-          <!-- VS -->
-          <div class="cg-vs">
-            <div class="vs-line"></div>
-            <div class="vs-circle">VS</div>
-            <div class="vs-line"></div>
-          </div>
-
-          <!-- Mit ZEV -->
-          <div class="scenario">
-            <div class="sc-head" id="sc-head-B">
-              <div>
-                <div class="sc-label" id="sc-label-B">Szenario B</div>
-                <div class="sc-title">Mit ZEV</div>
-                <div class="sc-desc">Direktverkauf an Mieterinnen und Mieter</div>
-              </div>
-              <div class="sc-cf">
-                <div class="sc-cf-num" id="zev-cf">—</div>
-                <div class="sc-cf-unit">CHF / Jahr Cashflow</div>
-              </div>
+          <!-- CARD 2: Rendite / Cashflow -->
+          <div class="hero-card">
+            <div class="hc-top">
+              <div class="hc-icon">💰</div>
+              <div class="hc-title">Ertrag pro Jahr (Cashflow)</div>
             </div>
-            <div class="sc-amor">
-              <span class="sc-amor-label"><span>⏱</span> Amortisation (inkl. ZEV Kosten)</span>
-              <span class="sc-amor-val" id="zev-amor">—</span>
-            </div>
-            <div class="sc-details-toggle" onclick="toggleRenditeDetails()">
-              <span class="sc-dt-text">Details einblenden</span>
-              <span class="chevron">▼</span>
-            </div>
-            <div class="sc-details" id="details-B">
-              <div class="sc-row">
-                <div class="sc-bar" style="background:var(--strawberry)"></div>
-                <div class="sc-row-body">
-                  <div class="sc-row-name">Eigenverbrauch Haus</div>
-                  <div class="sc-row-desc">Identisch wie ohne ZEV</div>
-                  <div class="sc-row-kwh" id="zev-e-kwh">—</div>
-                </div>
-                <div class="sc-pct pct-red">20%</div>
-                <div class="sc-row-chf" id="zev-e-chf">—</div>
+            <div class="hc-compare">
+              <div class="hc-side" id="hc-cf-no-box">
+                <div class="hc-side-lbl">Ohne ZEV<span class="hc-badge" id="hc-cf-no-badge"
+                    style="display:none">Tipp</span></div>
+                <div class="hc-side-val" id="hc-cf-no-val">—</div>
               </div>
-              <div class="sc-row">
-                <div class="sc-bar" style="background:var(--green)"></div>
-                <div class="sc-row-body">
-                  <div class="sc-row-name">ZEV → direkt an Mieter</div>
-                  <div class="sc-row-desc">Zum ZEV-Tarif (~<span id="zev-zt-label">—</span> Rp./kWh) — deutlich besser
-                    als
-                    Einspeisung</div>
-                  <div class="sc-row-kwh" id="zev-z-kwh">—</div>
-                </div>
-                <div class="sc-pct pct-green" id="zev-z-pct">17%</div>
-                <div class="sc-row-chf" id="zev-z-chf">—</div>
-              </div>
-              <div class="sc-row">
-                <div class="sc-bar" style="background:var(--cerulean)"></div>
-                <div class="sc-row-body">
-                  <div class="sc-row-name">Rest → Einspeisung</div>
-                  <div class="sc-row-desc">Verbleibender Anteil wird ins Netz eingespeist</div>
-                  <div class="sc-row-kwh" id="zev-ei-kwh">—</div>
-                </div>
-                <div class="sc-pct pct-blue" id="zev-ei-pct">63%</div>
-                <div class="sc-row-chf" id="zev-ei-chf">—</div>
+              <div class="hc-vs">vs</div>
+              <div class="hc-side" id="hc-cf-zev-box">
+                <div class="hc-side-lbl">Mit ZEV<span class="hc-badge" id="hc-cf-zev-badge"
+                    style="display:none">Tipp</span></div>
+                <div class="hc-side-val" id="hc-cf-zev-val">—</div>
               </div>
             </div>
-          </div>
-        </div>
-
-        <!-- Delta -->
-        <div class="delta-box" id="delta-box">
-          <div class="delta-icon">💡</div>
-          <div class="delta-text">
-            <div class="delta-title">ZEV-Vorteil pro Jahr</div>
-            <div class="delta-desc" id="delta-desc">—</div>
-          </div>
-          <div class="delta-num">
-            <span id="delta-chf">—</span>
-            <small>CHF mehr / Jahr mit ZEV</small>
-          </div>
-        </div>
-      </section>
-
-      <!-- ② 25 JAHRE VERGLEICH ────────────────────────── -->
-      <section id="langzeit">
-        <div class="sh">
-          <div class="sh-num">2</div>
-          <h2>Was zählt wirklich: Gesamtgewinn über 25 Jahre</h2>
-          <div class="sh-line"></div>
-        </div>
-
-        <div class="yr25-explain">
-          <strong>Weshalb die Amortisationszeit alleine ein unvollständiges Bild ergibt:</strong> Mit ZEV investieren
-          Sie mehr (Zähler, Server, Software) — deshalb dauert die Amortisation etwas länger.
-          Nach Ablauf der Amortisationszeit fliessen jedoch jährlich höhere Erträge. Der <strong>Gesamtgewinn über 25
-            Jahre</strong> zeigt das vollständige Bild.
-        </div>
-
-        <div class="yr25-grid">
-          <!-- Ohne ZEV -->
-          <div class="yr25-card">
-            <div class="yr25-card-head" id="yc-head-A">
-              <div class="yc-label" id="yc-label-A">Szenario A</div>
-              <div class="yc-title">Ohne ZEV — über 25 Jahre</div>
-            </div>
-            <div class="yr25-row">
-              <div class="yr25-row-left">
-                <div class="yr25-row-label">Einnahmen (25 × Cashflow)</div>
-                <div class="yr25-row-hint">Jährlicher Cashflow × 25 Jahre</div>
-              </div>
-              <div class="yr25-row-val val-pos" id="y25-no-ein">—</div>
-            </div>
-            <div class="yr25-row">
-              <div class="yr25-row-left">
-                <div class="yr25-row-label">Investition PV-Anlage</div>
-                <div class="yr25-row-hint">Offerte abzüglich Förderung</div>
-              </div>
-              <div class="yr25-row-val val-neg" id="y25-no-inv">—</div>
-            </div>
-            <div class="yr25-row">
-              <div class="yr25-row-left">
-                <div class="yr25-row-label">Amortisation nach</div>
-                <div class="yr25-row-hint">Ab diesem Zeitpunkt reiner Ertrag</div>
-              </div>
-              <div class="yr25-row-val val-neu" id="y25-no-amor">—</div>
-            </div>
-            <div class="yr25-total-row">
-              <div class="yr25-total-label">🏆 Nettogewinn 25 Jahre</div>
-              <div class="yr25-total-val" id="y25-no-total">—</div>
+            <div class="hc-footer">
+              <span id="hc-rendite-badge" class="hc-foot-neu">Differenz: —</span>
             </div>
           </div>
 
-          <!-- Mit ZEV -->
-          <div class="yr25-card">
-            <div class="yr25-card-head" id="yc-head-B">
-              <div class="yc-label" id="yc-label-B">Szenario B</div>
-              <div class="yc-title">Mit ZEV — über 25 Jahre</div>
+          <!-- CARD 3: Amortisation -->
+          <div class="hero-card">
+            <div class="hc-top">
+              <div class="hc-icon">⏱</div>
+              <div class="hc-title">Amortisationszeit</div>
             </div>
-            <div class="yr25-row">
-              <div class="yr25-row-left">
-                <div class="yr25-row-label">Einnahmen (25 × Cashflow)</div>
-                <div class="yr25-row-hint">Höherer jährlicher Cashflow × 25 Jahre</div>
+            <div class="hc-compare">
+              <div class="hc-side" id="hc-am-no-box">
+                <div class="hc-side-lbl">Ohne ZEV<span class="hc-badge" id="hc-am-no-badge"
+                    style="display:none">Tipp</span></div>
+                <div class="hc-side-val" id="hc-am-no-val">—</div>
               </div>
-              <div class="yr25-row-val val-pos" id="y25-zev-ein">—</div>
-            </div>
-            <div class="yr25-row">
-              <div class="yr25-row-left">
-                <div class="yr25-row-label">Investition PV + ZEV-System</div>
-                <div class="yr25-row-hint">PV-Anlage + Zähler, Server, Software (einmalig)</div>
+              <div class="hc-vs">vs</div>
+              <div class="hc-side" id="hc-am-zev-box">
+                <div class="hc-side-lbl">Mit ZEV<span class="hc-badge" id="hc-am-zev-badge"
+                    style="display:none">Tipp</span></div>
+                <div class="hc-side-val" id="hc-am-zev-val">—</div>
               </div>
-              <div class="yr25-row-val val-neg" id="y25-zev-inv">—</div>
             </div>
-            <div class="yr25-row">
-              <div class="yr25-row-left">
-                <div class="yr25-row-label">Wiederkehrende Kosten (25 J.)</div>
-                <div class="yr25-row-hint">Betrieb des ZEV-Systems × 25 Jahre</div>
+            <div class="hc-footer">
+              <span id="hc-am-badge" class="hc-foot-neu">Differenz: —</span>
+            </div>
+          </div>
+
+          <!-- CARD 4: Mieter-Ersparnis -->
+          <div class="hero-card">
+            <div class="hc-top">
+              <div class="hc-icon">🤝</div>
+              <div class="hc-title">Mieter-Ersparnis pro Jahr</div>
+            </div>
+            <div class="hc-compare">
+              <div class="hc-side" id="hc-mi-no-box">
+                <div class="hc-side-lbl">Ohne ZEV</div>
+                <div class="hc-side-val" id="hc-mi-no-val">0 CHF</div>
+                <div style="font-size:9px; color:var(--muted); margin-top:2px;">(Normaler EW-Tarif)</div>
               </div>
-              <div class="yr25-row-val val-neg" id="y25-zev-op">—</div>
-            </div>
-            <div class="yr25-row">
-              <div class="yr25-row-left">
-                <div class="yr25-row-label">Amortisation nach</div>
-                <div class="yr25-row-hint">Geringfügig länger aufgrund der Mehrinvestition</div>
+              <div class="hc-vs">vs</div>
+              <div class="hc-side" id="hc-mi-zev-box">
+                <div class="hc-side-lbl">Mit ZEV<span class="hc-badge" id="hc-mi-zev-badge"
+                    style="display:none">Tipp</span></div>
+                <div class="hc-side-val" id="hc-mi-zev-val">—</div>
+                <div style="font-size:9px; color:var(--muted); margin-top:2px;">(Pro Wohneinheit)</div>
               </div>
-              <div class="yr25-row-val val-neu" id="y25-zev-amor">—</div>
             </div>
-            <div class="yr25-total-row">
-              <div class="yr25-total-label">🏆 Nettogewinn 25 Jahre</div>
-              <div class="yr25-total-val" id="y25-zev-total">—</div>
+            <div class="hc-footer">
+              <span id="hc-mi-badge" class="hc-foot-pos">Win-Win für alle Parteien</span>
             </div>
           </div>
         </div>
 
         <!-- Timeline chart -->
-        <div class="timeline-wrap">
+        <div class="timeline-wrap" style="margin-top:40px;">
           <div class="timeline-title">Kumulierter Ertrag — Jahr für Jahr</div>
           <div class="timeline-sub">Jeder Balken zeigt den kumulierten Gewinn (nach Abzug aller Investitionen) zum
             jeweiligen Zeitpunkt. Negative Werte bedeuten, dass die Investition noch nicht vollständig amortisiert ist.
@@ -624,244 +511,475 @@
             <div class="wb-num-label">CHF mehr Nettogewinn mit ZEV über 25 Jahre</div>
           </div>
         </div>
+      </div>
 
-      </section>
-      <!-- ③ STROMFLUSS ───────────────────────────────── -->
-      <section id="stromfluss">
-        <div class="sh">
-          <div class="sh-num">3</div>
-          <h2>Wohin fliesst der Solarstrom?</h2>
-          <div class="sh-line"></div>
-        </div>
+      <!-- TAB 2: DETAILANALYSE -->
+      <div id="tab-details" class="tab-content" style="display:none;">
 
-        <div class="explain">
-          <div class="ex-title">Funktionsweise</div>
-          Die Solaranlage produziert Strom. Dieser wird auf <strong>3 Wege</strong> aufgeteilt:
-          Das Haus verbraucht einen Teil selbst, ein Teil wird direkt an die Mieterinnen und Mieter verkauft (ZEV), und
-          der Rest wird ins Stromnetz eingespeist.
-          Die Prozentsätze können Sie links im Regler anpassen — der Rechner zeigt Ihnen sofort, wie sich dies auf die
-          Einnahmen auswirkt.
-        </div>
-
-        <!-- FLOW DIAGRAM: Ohne ZEV -->
-        <div
-          style="margin-bottom:10px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.8px; color:var(--negative);">
-          Ohne ZEV — Stromfluss</div>
-        <div class="flow" style="margin-bottom:16px;">
-          <div class="flow-source">
-            <div class="flow-source-icon">☀️</div>
-            <div class="flow-source-val" id="f-prod">31'020</div>
-            <div class="flow-source-label">kWh Produktion<br>pro Jahr</div>
-          </div>
-          <div class="flow-arrow">→</div>
-          <div class="flow-splits">
-            <div class="flow-split fs-eigen">
-              <div class="fs-pct">20%</div>
-              <div class="fs-kwh" id="f-no-e-kwh">—</div>
-              <div class="fs-label">Eigenverbrauch</div>
-              <div class="fs-desc">Allgemeinstrom, Lift,<br>Treppenhaus etc.</div>
-              <div class="fs-chf" id="f-no-e-chf">—</div>
-              <div class="fs-chf-label">CHF / Jahr (eingespart)</div>
-            </div>
-            <div class="flow-split fs-einspeis">
-              <div class="fs-pct">80%</div>
-              <div class="fs-kwh" id="f-no-ei-kwh">—</div>
-              <div class="fs-label">→ Stromnetz</div>
-              <div class="fs-desc">Verkauf zum tiefen<br>Einspeisungstarif</div>
-              <div class="fs-chf" id="f-no-ei-chf">—</div>
-              <div class="fs-chf-label">CHF / Jahr Einnahmen</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- FLOW DIAGRAM: Mit ZEV -->
-        <div
-          style="margin-bottom:10px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.8px; color:var(--brand-cyan);">
-          Mit ZEV — Stromfluss</div>
-        <div class="flow">
-          <div class="flow-source">
-            <div class="flow-source-icon">☀️</div>
-            <div class="flow-source-val" id="f-prod2">31'020</div>
-            <div class="flow-source-label">kWh Produktion<br>pro Jahr</div>
-          </div>
-          <div class="flow-arrow">→</div>
-          <div class="flow-splits">
-            <div class="flow-split fs-eigen">
-              <div class="fs-pct">20%</div>
-              <div class="fs-kwh" id="f-zev-e-kwh">—</div>
-              <div class="fs-label">Eigenverbrauch</div>
-              <div class="fs-desc">Allgemeinstrom, Lift,<br>Treppenhaus etc.</div>
-              <div class="fs-chf" id="f-zev-e-chf">—</div>
-              <div class="fs-chf-label">CHF / Jahr (eingespart)</div>
-            </div>
-            <div class="flow-split fs-zev">
-              <div class="fs-pct" id="f-zev-pct">60%</div>
-              <div class="fs-kwh" id="f-zev-z-kwh">—</div>
-              <div class="fs-label">→ Mieter (ZEV)</div>
-              <div class="fs-desc">Günstiger als Netztarif,<br>besser als Einspeisung</div>
-              <div class="fs-chf" id="f-zev-z-chf">—</div>
-              <div class="fs-chf-label">CHF / Jahr Einnahmen</div>
-            </div>
-            <div class="flow-split fs-einspeis">
-              <div class="fs-pct" id="f-einspeis-pct">20%</div>
-              <div class="fs-kwh" id="f-zev-ei-kwh">—</div>
-              <div class="fs-label">→ Stromnetz</div>
-              <div class="fs-desc">Restlicher Strom wird<br>ins Netz eingespeist</div>
-              <div class="fs-chf" id="f-zev-ei-chf">—</div>
-              <div class="fs-chf-label">CHF / Jahr Einnahmen</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-
-      <!-- ④ ZEV KOSTEN ─────────────────────────────────── -->
-      <section id="kosten">
-        <div class="sh">
-          <div class="sh-num">4</div>
-          <h2>ZEV Kosten</h2>
-          <div class="sh-line"></div>
-        </div>
-
-        <div class="explain">
-          <div class="ex-title">Weshalb verursacht ZEV Mehrkosten?</div>
-          Damit Strom direkt an die Mieterinnen und Mieter verkauft werden kann, benötigt jede Wohneinheit einen eigenen
-          intelligenten Zähler, einen Server zur Messdatenerfassung sowie eine Software für die Abrechnung.
-          Dies ergibt <strong>einmalige Installationskosten</strong> sowie <strong>jährliche Betriebskosten</strong>.
-        </div>
-
-        <div class="kosten-grid">
-          <div class="kost-card">
-            <div class="kost-head">
-              <div class="kost-type">Einmalige Kosten</div>
-              <div class="kost-val einmalig" id="k-einmalig">—</div>
-              <div class="kost-sub">CHF — einmalige Investition</div>
-            </div>
-            <div id="kosten-einmalig-rows">
-              <!-- Generated by JS -->
-            </div>
+        <!-- ① RENDITE ───────────────────────────────── -->
+        <section id="rendite">
+          <div class="sh">
+            <div class="sh-num">1</div>
+            <h2>Rendite-Vergleich: Ohne vs. Mit ZEV</h2>
+            <div class="sh-line"></div>
           </div>
 
-          <div class="kost-card">
-            <div class="kost-head">
-              <div class="kost-type">Wiederkehrende Kosten</div>
-              <div class="kost-val wiederk" id="k-wiederk">—</div>
-              <div class="kost-sub">CHF pro Jahr (Betrieb)</div>
-            </div>
-            <div id="kosten-wiederkehrend-rows">
-              <!-- Generated by JS -->
+          <div class="compare-grid">
+            <!-- Ohne ZEV -->
+            <div class="scenario">
+              <div class="sc-head" id="sc-head-A">
+                <div>
+                  <div class="sc-label" id="sc-label-A">Szenario A</div>
+                  <div class="sc-title">Ohne ZEV</div>
+                  <div class="sc-desc">Überschussproduktion direkt ans Netz</div>
+                </div>
+                <div class="sc-cf">
+                  <div class="sc-cf-num" id="no-cf">—</div>
+                  <div class="sc-cf-unit">CHF / Jahr Cashflow</div>
+                </div>
+              </div>
+              <div class="sc-amor">
+                <span class="sc-amor-label"><span>⏱</span> Amortisation</span>
+                <span class="sc-amor-val" id="no-amor">—</span>
+              </div>
+              <div class="sc-details-toggle" onclick="toggleRenditeDetails()">
+                <span class="sc-dt-text">Details einblenden</span>
+                <span class="chevron">▼</span>
+              </div>
+              <div class="sc-details" id="details-A">
+                <div class="sc-row">
+                  <div class="sc-bar" style="background:var(--strawberry)"></div>
+                  <div class="sc-row-body">
+                    <div class="sc-row-name">Eigenverbrauch Haus</div>
+                    <div class="sc-row-desc">Intern genutzter Strom — reduziert den Netzbezug</div>
+                    <div class="sc-row-kwh" id="no-e-kwh">—</div>
+                  </div>
+                  <div class="sc-pct pct-red">20%</div>
+                  <div class="sc-row-chf" id="no-e-chf">—</div>
+                </div>
+                <div class="sc-row">
+                  <div class="sc-bar" style="background:var(--cerulean)"></div>
+                  <div class="sc-row-body">
+                    <div class="sc-row-name">Einspeisung ins Netz</div>
+                    <div class="sc-row-desc">Sehr tiefer Vergütungstarif (~<span id="no-ev-label">—</span> Rp./kWh)
+                    </div>
+                    <div class="sc-row-kwh" id="no-ei-kwh">—</div>
+                  </div>
+                  <div class="sc-pct pct-blue">80%</div>
+                  <div class="sc-row-chf" id="no-ei-chf">—</div>
+                </div>
+              </div>
             </div>
 
-            <div class="kost-row"
-              style="padding-top:12px; padding-bottom:12px; background:var(--imperial-light); border-top:1px solid rgba(0,0,0,0.05); margin-top: 8px;">
-              <span class="kr-label"
-                style="font-weight:700; color:var(--brand-black); font-size: 11px; line-height: 1.4;">Die längere
-                Amortisationszeit
-                mit ZEV erklärt sich dadurch, dass der höhere Cashflow zunächst diese Mehrkosten abdecken muss.</span>
+            <!-- VS -->
+            <div class="cg-vs">
+              <div class="vs-line"></div>
+              <div class="vs-circle">VS</div>
+              <div class="vs-line"></div>
             </div>
-          </div>
-        </div>
-      </section>
 
-      <!-- ⑤ MIETER ─────────────────────────────────────── -->
-      <section id="mieter">
-        <div class="sh">
-          <div class="sh-num">5</div>
-          <h2>Einsparungen für die Mieterinnen und Mieter</h2>
-          <div class="sh-line"></div>
-        </div>
+            <!-- Mit ZEV -->
+            <div class="scenario">
+              <div class="sc-head" id="sc-head-B">
+                <div>
+                  <div class="sc-label" id="sc-label-B">Szenario B</div>
+                  <div class="sc-title">Mit ZEV</div>
+                  <div class="sc-desc">Direktverkauf an Mieterinnen und Mieter</div>
+                </div>
+                <div class="sc-cf">
+                  <div class="sc-cf-num" id="zev-cf">—</div>
+                  <div class="sc-cf-unit">CHF / Jahr Cashflow</div>
+                </div>
+              </div>
+              <div class="sc-amor">
+                <span class="sc-amor-label"><span>⏱</span> Amortisation (inkl. ZEV Kosten)</span>
+                <span class="sc-amor-val" id="zev-amor">—</span>
+              </div>
+              <div class="sc-details-toggle" onclick="toggleRenditeDetails()">
+                <span class="sc-dt-text">Details einblenden</span>
+                <span class="chevron">▼</span>
+              </div>
+              <div class="sc-details" id="details-B">
+                <div class="sc-row">
+                  <div class="sc-bar" style="background:var(--strawberry)"></div>
+                  <div class="sc-row-body">
+                    <div class="sc-row-name">Eigenverbrauch Haus</div>
+                    <div class="sc-row-desc">Identisch wie ohne ZEV</div>
+                    <div class="sc-row-kwh" id="zev-e-kwh">—</div>
+                  </div>
+                  <div class="sc-pct pct-red">20%</div>
+                  <div class="sc-row-chf" id="zev-e-chf">—</div>
+                </div>
+                <div class="sc-row">
+                  <div class="sc-bar" style="background:var(--green)"></div>
+                  <div class="sc-row-body">
+                    <div class="sc-row-name">ZEV → direkt an Mieter</div>
+                    <div class="sc-row-desc">Zum ZEV-Tarif (~<span id="zev-zt-label">—</span> Rp./kWh) — deutlich besser
+                      als
+                      Einspeisung</div>
+                    <div class="sc-row-kwh" id="zev-z-kwh">—</div>
+                  </div>
+                  <div class="sc-pct pct-green" id="zev-z-pct">17%</div>
+                  <div class="sc-row-chf" id="zev-z-chf">—</div>
+                </div>
+                <div class="sc-row">
+                  <div class="sc-bar" style="background:var(--cerulean)"></div>
+                  <div class="sc-row-body">
+                    <div class="sc-row-name">Rest → Einspeisung</div>
+                    <div class="sc-row-desc">Verbleibender Anteil wird ins Netz eingespeist</div>
+                    <div class="sc-row-kwh" id="zev-ei-kwh">—</div>
+                  </div>
+                  <div class="sc-pct pct-blue" id="zev-ei-pct">63%</div>
+                  <div class="sc-row-chf" id="zev-ei-chf">—</div>
+                </div>
+              </div>
+            </div>
+          </div>
 
-        <div class="mieter-explain">
-          <div class="me-head">
-            <div style="font-size:24px">🏠</div>
-            <div class="me-head-text">
-              <div class="me-head-title">Einsparung pro Wohneinheit / Jahr</div>
-              <div class="me-head-sub">Die Mieterinnen und Mieter zahlen weniger für Strom und sparen Zählerkosten — es
-                fällt jedoch eine ZEV-Abrechnungsgebühr an</div>
+          <!-- Delta -->
+          <div class="delta-box" id="delta-box">
+            <div class="delta-icon">💡</div>
+            <div class="delta-text">
+              <div class="delta-title">ZEV-Vorteil pro Jahr</div>
+              <div class="delta-desc" id="delta-desc">—</div>
+            </div>
+            <div class="delta-num">
+              <span id="delta-chf">—</span>
+              <small>CHF mehr / Jahr mit ZEV</small>
             </div>
           </div>
-          <div class="me-cells">
-            <div class="me-cell">
-              <div class="me-icon">⚡</div>
-              <div class="me-label">Stromkosteneinsparung</div>
-              <div class="me-val" id="m-strom">—</div>
-              <div class="me-sub">Günstigerer ZEV-Strom gegenüber Netztarif</div>
-            </div>
-            <div class="me-cell">
-              <div class="me-icon">📊</div>
-              <div class="me-label">Zählerkosten-Einsparung</div>
-              <div class="me-val" id="m-zaehler">—</div>
-              <div class="me-sub">Kein eigener Netzzähler erforderlich</div>
-            </div>
-            <div class="me-cell">
-              <div class="me-icon">📄</div>
-              <div class="me-label">ZEV-Abrechnungsgebühr</div>
-              <div class="me-val me-neg" id="m-zev">—</div>
-              <div class="me-sub">Jährliche Gebühr für die ZEV-Abrechnung</div>
-            </div>
-            <div class="me-cell">
-              <div class="me-icon">✅</div>
-              <div class="me-label">Netto-Einsparung</div>
-              <div class="me-val" id="m-total">—</div>
-              <div class="me-sub">CHF / Jahr pro WE</div>
-            </div>
-          </div>
-          <div class="me-explain-row" id="me-explain-text">
-            Die Mieterinnen und Mieter profitieren: Sie bezahlen den günstigeren ZEV-Tarif anstelle des vollen
-            Netzstrompreises — und sparen zusätzlich die Zählerkosten.
-            Nach Abzug der ZEV-Abrechnungsgebühr verbleibt eine Netto-Einsparung pro Wohneinheit und Jahr.
-          </div>
-        </div>
-      </section>
+        </section>
 
-      <!-- ⑥ HERSTELLKOSTEN ─────────────────────────────── -->
-      <section id="herstellkosten">
-        <div class="sh">
-          <div class="sh-num">6</div>
-          <h2>Herstellkosten PV Strom</h2>
-          <div class="sh-line"></div>
-        </div>
-        <div class="hk-card">
-          <div class="hk-head">
-            <span class="hk-title">Produktionskosten über 25 Jahre</span>
-            <span class="hk-kwh">= <span id="hk-kwh">—</span> Rp./kWh</span>
+        <!-- ② 25 JAHRE VERGLEICH ────────────────────────── -->
+        <section id="langzeit">
+          <div class="sh">
+            <div class="sh-num">2</div>
+            <h2>Was zählt wirklich: Gesamtgewinn über 25 Jahre</h2>
+            <div class="sh-line"></div>
           </div>
-          <table>
-            <thead>
-              <tr>
-                <th>Position</th>
-                <th class="r">Betrag</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Investitionsbetrag (nach Förderung)</td>
-                <td class="td-r" id="hk-invest">—</td>
-              </tr>
-              <tr>
-                <td>Unterhaltskosten 25 Jahre (1.5%/Jahr)</td>
-                <td class="td-r" id="hk-unterhalt">—</td>
-              </tr>
-              <tr>
-                <td>Wechselrichter-Austausch</td>
-                <td class="td-r">4'000 CHF</td>
-              </tr>
-              <tr>
-                <td>Lastgangmessung</td>
-                <td class="td-r">3'000 CHF</td>
-              </tr>
-              <tr>
-                <td>Produktion 25J. (mit 80% Degradation)</td>
-                <td class="td-r" id="hk-prod">—</td>
-              </tr>
-              <tr class="tr-foot">
-                <td>Herstellkosten pro kWh</td>
-                <td class="td-r" id="hk-kwh2">—</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
+
+          <div class="yr25-explain">
+            <strong>Weshalb die Amortisationszeit alleine ein unvollständiges Bild ergibt:</strong> Mit ZEV investieren
+            Sie mehr (Zähler, Server, Software) — deshalb dauert die Amortisation etwas länger.
+            Nach Ablauf der Amortisationszeit fliessen jedoch jährlich höhere Erträge. Der <strong>Gesamtgewinn über 25
+              Jahre</strong> zeigt das vollständige Bild.
+          </div>
+
+          <div class="yr25-grid">
+            <!-- Ohne ZEV -->
+            <div class="yr25-card">
+              <div class="yr25-card-head" id="yc-head-A">
+                <div class="yc-label" id="yc-label-A">Szenario A</div>
+                <div class="yc-title">Ohne ZEV — über 25 Jahre</div>
+              </div>
+              <div class="yr25-row">
+                <div class="yr25-row-left">
+                  <div class="yr25-row-label">Einnahmen (25 × Cashflow)</div>
+                  <div class="yr25-row-hint">Jährlicher Cashflow × 25 Jahre</div>
+                </div>
+                <div class="yr25-row-val val-pos" id="y25-no-ein">—</div>
+              </div>
+              <div class="yr25-row">
+                <div class="yr25-row-left">
+                  <div class="yr25-row-label">Investition PV-Anlage</div>
+                  <div class="yr25-row-hint">Offerte abzüglich Förderung</div>
+                </div>
+                <div class="yr25-row-val val-neg" id="y25-no-inv">—</div>
+              </div>
+              <div class="yr25-row">
+                <div class="yr25-row-left">
+                  <div class="yr25-row-label">Amortisation nach</div>
+                  <div class="yr25-row-hint">Ab diesem Zeitpunkt reiner Ertrag</div>
+                </div>
+                <div class="yr25-row-val val-neu" id="y25-no-amor">—</div>
+              </div>
+              <div class="yr25-total-row">
+                <div class="yr25-total-label">🏆 Nettogewinn 25 Jahre</div>
+                <div class="yr25-total-val" id="y25-no-total">—</div>
+              </div>
+            </div>
+
+            <!-- Mit ZEV -->
+            <div class="yr25-card">
+              <div class="yr25-card-head" id="yc-head-B">
+                <div class="yc-label" id="yc-label-B">Szenario B</div>
+                <div class="yc-title">Mit ZEV — über 25 Jahre</div>
+              </div>
+              <div class="yr25-row">
+                <div class="yr25-row-left">
+                  <div class="yr25-row-label">Einnahmen (25 × Cashflow)</div>
+                  <div class="yr25-row-hint">Höherer jährlicher Cashflow × 25 Jahre</div>
+                </div>
+                <div class="yr25-row-val val-pos" id="y25-zev-ein">—</div>
+              </div>
+              <div class="yr25-row">
+                <div class="yr25-row-left">
+                  <div class="yr25-row-label">Investition PV + ZEV-System</div>
+                  <div class="yr25-row-hint">PV-Anlage + Zähler, Server, Software (einmalig)</div>
+                </div>
+                <div class="yr25-row-val val-neg" id="y25-zev-inv">—</div>
+              </div>
+              <div class="yr25-row">
+                <div class="yr25-row-left">
+                  <div class="yr25-row-label">Wiederkehrende Kosten (25 J.)</div>
+                  <div class="yr25-row-hint">Betrieb des ZEV-Systems × 25 Jahre</div>
+                </div>
+                <div class="yr25-row-val val-neg" id="y25-zev-op">—</div>
+              </div>
+              <div class="yr25-row">
+                <div class="yr25-row-left">
+                  <div class="yr25-row-label">Amortisation nach</div>
+                  <div class="yr25-row-hint">Geringfügig länger aufgrund der Mehrinvestition</div>
+                </div>
+                <div class="yr25-row-val val-neu" id="y25-zev-amor">—</div>
+              </div>
+              <div class="yr25-total-row">
+                <div class="yr25-total-label">🏆 Nettogewinn 25 Jahre</div>
+                <div class="yr25-total-val" id="y25-zev-total">—</div>
+              </div>
+            </div>
+        </section>
+        <!-- ③ STROMFLUSS ───────────────────────────────── -->
+        <section id="stromfluss">
+          <div class="sh">
+            <div class="sh-num">3</div>
+            <h2>Wohin fliesst der Solarstrom?</h2>
+            <div class="sh-line"></div>
+          </div>
+
+          <div class="explain">
+            <div class="ex-title">Funktionsweise</div>
+            Die Solaranlage produziert Strom. Dieser wird auf <strong>3 Wege</strong> aufgeteilt:
+            Das Haus verbraucht einen Teil selbst, ein Teil wird direkt an die Mieterinnen und Mieter verkauft (ZEV),
+            und
+            der Rest wird ins Stromnetz eingespeist.
+            Die Prozentsätze können Sie links im Regler anpassen — der Rechner zeigt Ihnen sofort, wie sich dies auf die
+            Einnahmen auswirkt.
+          </div>
+
+          <!-- FLOW DIAGRAM: Ohne ZEV -->
+          <div
+            style="margin-bottom:10px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.8px; color:var(--negative);">
+            Ohne ZEV — Stromfluss</div>
+          <div class="flow" style="margin-bottom:16px;">
+            <div class="flow-source">
+              <div class="flow-source-icon">☀️</div>
+              <div class="flow-source-val" id="f-prod">31'020</div>
+              <div class="flow-source-label">kWh Produktion<br>pro Jahr</div>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-splits">
+              <div class="flow-split fs-eigen">
+                <div class="fs-pct">20%</div>
+                <div class="fs-kwh" id="f-no-e-kwh">—</div>
+                <div class="fs-label">Eigenverbrauch</div>
+                <div class="fs-desc">Allgemeinstrom, Lift,<br>Treppenhaus etc.</div>
+                <div class="fs-chf" id="f-no-e-chf">—</div>
+                <div class="fs-chf-label">CHF / Jahr (eingespart)</div>
+              </div>
+              <div class="flow-split fs-einspeis">
+                <div class="fs-pct">80%</div>
+                <div class="fs-kwh" id="f-no-ei-kwh">—</div>
+                <div class="fs-label">→ Stromnetz</div>
+                <div class="fs-desc">Verkauf zum tiefen<br>Einspeisungstarif</div>
+                <div class="fs-chf" id="f-no-ei-chf">—</div>
+                <div class="fs-chf-label">CHF / Jahr Einnahmen</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- FLOW DIAGRAM: Mit ZEV -->
+          <div
+            style="margin-bottom:10px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.8px; color:var(--brand-cyan);">
+            Mit ZEV — Stromfluss</div>
+          <div class="flow">
+            <div class="flow-source">
+              <div class="flow-source-icon">☀️</div>
+              <div class="flow-source-val" id="f-prod2">31'020</div>
+              <div class="flow-source-label">kWh Produktion<br>pro Jahr</div>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-splits">
+              <div class="flow-split fs-eigen">
+                <div class="fs-pct">20%</div>
+                <div class="fs-kwh" id="f-zev-e-kwh">—</div>
+                <div class="fs-label">Eigenverbrauch</div>
+                <div class="fs-desc">Allgemeinstrom, Lift,<br>Treppenhaus etc.</div>
+                <div class="fs-chf" id="f-zev-e-chf">—</div>
+                <div class="fs-chf-label">CHF / Jahr (eingespart)</div>
+              </div>
+              <div class="flow-split fs-zev">
+                <div class="fs-pct" id="f-zev-pct">60%</div>
+                <div class="fs-kwh" id="f-zev-z-kwh">—</div>
+                <div class="fs-label">→ Mieter (ZEV)</div>
+                <div class="fs-desc">Günstiger als Netztarif,<br>besser als Einspeisung</div>
+                <div class="fs-chf" id="f-zev-z-chf">—</div>
+                <div class="fs-chf-label">CHF / Jahr Einnahmen</div>
+              </div>
+              <div class="flow-split fs-einspeis">
+                <div class="fs-pct" id="f-einspeis-pct">20%</div>
+                <div class="fs-kwh" id="f-zev-ei-kwh">—</div>
+                <div class="fs-label">→ Stromnetz</div>
+                <div class="fs-desc">Restlicher Strom wird<br>ins Netz eingespeist</div>
+                <div class="fs-chf" id="f-zev-ei-chf">—</div>
+                <div class="fs-chf-label">CHF / Jahr Einnahmen</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+
+        <!-- ④ ZEV KOSTEN ─────────────────────────────────── -->
+        <section id="kosten">
+          <div class="sh">
+            <div class="sh-num">4</div>
+            <h2>ZEV Kosten</h2>
+            <div class="sh-line"></div>
+          </div>
+
+          <div class="explain">
+            <div class="ex-title">Weshalb verursacht ZEV Mehrkosten?</div>
+            Damit Strom direkt an die Mieterinnen und Mieter verkauft werden kann, benötigt jede Wohneinheit einen
+            eigenen
+            intelligenten Zähler, einen Server zur Messdatenerfassung sowie eine Software für die Abrechnung.
+            Dies ergibt <strong>einmalige Installationskosten</strong> sowie <strong>jährliche Betriebskosten</strong>.
+          </div>
+
+          <div class="kosten-grid">
+            <div class="kost-card">
+              <div class="kost-head">
+                <div class="kost-type">Einmalige Kosten</div>
+                <div class="kost-val einmalig" id="k-einmalig">—</div>
+                <div class="kost-sub">CHF — einmalige Investition</div>
+              </div>
+              <div id="kosten-einmalig-rows">
+                <!-- Generated by JS -->
+              </div>
+            </div>
+
+            <div class="kost-card">
+              <div class="kost-head">
+                <div class="kost-type">Wiederkehrende Kosten</div>
+                <div class="kost-val wiederk" id="k-wiederk">—</div>
+                <div class="kost-sub">CHF pro Jahr (Betrieb)</div>
+              </div>
+              <div id="kosten-wiederkehrend-rows">
+                <!-- Generated by JS -->
+              </div>
+
+              <div class="kost-row"
+                style="padding-top:12px; padding-bottom:12px; background:var(--imperial-light); border-top:1px solid rgba(0,0,0,0.05); margin-top: 8px;">
+                <span class="kr-label"
+                  style="font-weight:700; color:var(--brand-black); font-size: 11px; line-height: 1.4;">Die längere
+                  Amortisationszeit
+                  mit ZEV erklärt sich dadurch, dass der höhere Cashflow zunächst diese Mehrkosten abdecken muss.</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ⑤ MIETER ─────────────────────────────────────── -->
+        <section id="mieter">
+          <div class="sh">
+            <div class="sh-num">5</div>
+            <h2>Einsparungen für die Mieterinnen und Mieter</h2>
+            <div class="sh-line"></div>
+          </div>
+
+          <div class="mieter-explain">
+            <div class="me-head">
+              <div style="font-size:24px">🏠</div>
+              <div class="me-head-text">
+                <div class="me-head-title">Einsparung pro Wohneinheit / Jahr</div>
+                <div class="me-head-sub">Die Mieterinnen und Mieter zahlen weniger für Strom und sparen Zählerkosten —
+                  es
+                  fällt jedoch eine ZEV-Abrechnungsgebühr an</div>
+              </div>
+            </div>
+            <div class="me-cells">
+              <div class="me-cell">
+                <div class="me-icon">⚡</div>
+                <div class="me-label">Stromkosteneinsparung</div>
+                <div class="me-val" id="m-strom">—</div>
+                <div class="me-sub">Günstigerer ZEV-Strom gegenüber Netztarif</div>
+              </div>
+              <div class="me-cell">
+                <div class="me-icon">📊</div>
+                <div class="me-label">Zählerkosten-Einsparung</div>
+                <div class="me-val" id="m-zaehler">—</div>
+                <div class="me-sub">Kein eigener Netzzähler erforderlich</div>
+              </div>
+              <div class="me-cell">
+                <div class="me-icon">📄</div>
+                <div class="me-label">ZEV-Abrechnungsgebühr</div>
+                <div class="me-val me-neg" id="m-zev">—</div>
+                <div class="me-sub">Jährliche Gebühr für die ZEV-Abrechnung</div>
+              </div>
+              <div class="me-cell">
+                <div class="me-icon">✅</div>
+                <div class="me-label">Netto-Einsparung</div>
+                <div class="me-val" id="m-total">—</div>
+                <div class="me-sub">CHF / Jahr pro WE</div>
+              </div>
+            </div>
+            <div class="me-explain-row" id="me-explain-text">
+              Die Mieterinnen und Mieter profitieren: Sie bezahlen den günstigeren ZEV-Tarif anstelle des vollen
+              Netzstrompreises — und sparen zusätzlich die Zählerkosten.
+              Nach Abzug der ZEV-Abrechnungsgebühr verbleibt eine Netto-Einsparung pro Wohneinheit und Jahr.
+            </div>
+          </div>
+        </section>
+
+        <!-- ⑥ HERSTELLKOSTEN ─────────────────────────────── -->
+        <section id="herstellkosten">
+          <div class="sh">
+            <div class="sh-num">6</div>
+            <h2>Herstellkosten PV Strom</h2>
+            <div class="sh-line"></div>
+          </div>
+          <div class="hk-card">
+            <div class="hk-head">
+              <span class="hk-title">Produktionskosten über 25 Jahre</span>
+              <span class="hk-kwh">= <span id="hk-kwh">—</span> Rp./kWh</span>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Position</th>
+                  <th class="r">Betrag</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Investitionsbetrag (nach Förderung)</td>
+                  <td class="td-r" id="hk-invest">—</td>
+                </tr>
+                <tr>
+                  <td>Unterhaltskosten 25 Jahre (1.5%/Jahr)</td>
+                  <td class="td-r" id="hk-unterhalt">—</td>
+                </tr>
+                <tr>
+                  <td>Wechselrichter-Austausch</td>
+                  <td class="td-r">4'000 CHF</td>
+                </tr>
+                <tr>
+                  <td>Lastgangmessung</td>
+                  <td class="td-r">3'000 CHF</td>
+                </tr>
+                <tr>
+                  <td>Produktion 25J. (mit 80% Degradation)</td>
+                  <td class="td-r" id="hk-prod">—</td>
+                </tr>
+                <tr class="tr-foot">
+                  <td>Herstellkosten pro kWh</td>
+                  <td class="td-r" id="hk-kwh2">—</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+      </div> <!-- END TAB DETAILS -->
 
     </main>
   </div>

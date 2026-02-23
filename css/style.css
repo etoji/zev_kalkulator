@@ -82,6 +82,8 @@
       background: var(--surface);
       color: var(--text);
       min-height: 100vh;
+      display: flex;
+      flex-direction: column;
     }
 
     /* â”€â”€â”€ TOPBAR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
@@ -194,7 +196,8 @@
     .layout {
       display: grid;
       grid-template-columns: 340px 1fr;
-      min-height: calc(100vh - 100px);
+      flex: 1;
+      /* Pushes the footer down when content is shorter than viewport */
     }
 
     /* ─── SIDEBAR ─── */
@@ -202,9 +205,9 @@
       background: #F8F9FA;
       border-right: 1px solid var(--alabaster);
       position: sticky;
-      top: 100px;
-      /* 58px header + ~42px nav */
-      height: calc(100vh - 100px);
+      top: 61px;
+      /* 58px header + 3px border */
+      height: calc(100vh - 61px);
       overflow-y: auto;
       display: flex;
       flex-direction: column;
@@ -725,7 +728,7 @@
 
     /* â”€â”€â”€ MAIN â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
     .main {
-      padding: 28px 30px;
+      padding: 16px 30px 40px 30px;
       display: flex;
       flex-direction: column;
       gap: 32px;
@@ -2176,23 +2179,38 @@
       max-height: 300px;
     }
 
-    /* ─── Section Navigation Bar ─── */
-    .section-nav {
-      position: sticky;
-      top: 58px;
-      /* height of .topbar (border bottom is included in 58px) */
-      z-index: 90;
+    /* ─── MAIN HEADER ROW (Sticky tab & nav) ─── */
+    .main-header-row {
       display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 61px;
+      /* Stick immediately below topbar */
+      z-index: 90;
+      padding-top: 16px;
+      margin-bottom: 24px;
+      margin-top: -16px;
+      /* Negate .main padding-top for full stickiness */
+      background: var(--surface);
+    }
+
+    /* ─── Section Navigation Bar (Floating Pill) ─── */
+    .section-nav {
+      display: inline-flex;
       align-items: center;
       gap: 4px;
-      padding: 8px 16px;
-      background: rgba(255, 255, 255, 0.92);
+      padding: 6px;
+      margin: 0;
+      background: rgba(255, 255, 255, 0.85);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--grey-300);
+      border: 1px solid var(--grey-300);
+      border-radius: 30px;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
       overflow-x: auto;
       scrollbar-width: none;
+      align-self: flex-start;
     }
 
     .section-nav::-webkit-scrollbar {
@@ -2250,5 +2268,214 @@
     /* Scroll offset for sticky nav */
     section[id] {
       scroll-margin-top: 130px;
-      /* 61px header + ~50px nav + padding */
+      margin-bottom: 60px;
+    }
+
+    /* ─── TAB SWITCHER & HERO CARDS (DASHBOARD) ─── */
+    .tab-switcher {
+      display: flex;
+      gap: 8px;
+      padding: 8px;
+      background: #EAECEF;
+      border-radius: 30px;
+      width: max-content;
+    }
+
+    .tab-btn {
+      padding: 10px 24px;
+      border: none;
+      background: transparent;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--grey-500);
+      cursor: pointer;
+      font-family: 'Manrope', sans-serif;
+      transition: all 0.25s ease;
+    }
+
+    .tab-btn:hover {
+      color: var(--grey-800);
+    }
+
+    .tab-btn.active {
+      background: #fff;
+      color: var(--brand-cyan-deep);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      transform: translateY(-1px);
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .hero-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+      border: 1px solid var(--grey-100);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    /* Primary Hero Card (25-Year Profit) - Accent Highlight */
+    .hero-card.hc-primary {
+      background: linear-gradient(145deg, #ffffff 0%, #f0fbff 100%);
+      border: 2px solid var(--brand-cyan);
+      box-shadow: 0 8px 24px rgba(0, 174, 239, 0.15);
+      position: relative;
+    }
+
+    .hc-primary .hc-side {
+      background: rgba(0, 174, 239, 0.03);
+      border-color: rgba(0, 174, 239, 0.1);
+    }
+
+    .hc-primary .hc-side.is-winner {
+      background: rgba(0, 174, 239, 0.12);
+      border-color: var(--brand-cyan);
+    }
+
+    .hc-top {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .hc-top .hc-icon {
+      font-size: 22px;
+    }
+
+    .hc-top .hc-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 700;
+      color: var(--brand-black);
+    }
+
+    .hc-compare {
+      display: flex;
+      align-items: stretch;
+      gap: 8px;
+    }
+
+    .hc-vs {
+      display: flex;
+      align-items: center;
+      font-size: 10px;
+      color: var(--grey-300);
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .hc-side {
+      flex: 1;
+      background: var(--surface);
+      border: 1px solid var(--alabaster);
+      border-radius: 8px;
+      padding: 8px 10px;
+      position: relative;
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .hc-side.is-winner {
+      background: var(--brand-cyan-light);
+      border-color: var(--brand-cyan-mid);
+      box-shadow: 0 2px 4px rgba(0, 174, 239, 0.1);
+    }
+
+    .hc-side.is-loser {
+      opacity: 0.6;
+      background: var(--grey-50);
+    }
+
+    .hc-side-lbl {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--grey-500);
+      text-transform: uppercase;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 4px;
+    }
+
+    .hc-side.is-winner .hc-side-lbl {
+      color: var(--brand-cyan-deep);
+    }
+
+    .hc-badge {
+      font-size: 8px;
+      background: var(--brand-cyan);
+      color: white;
+      padding: 2px 4px;
+      border-radius: 4px;
+      text-transform: none;
+      letter-spacing: 0;
+    }
+
+    .hc-side-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--brand-black);
+    }
+
+    .hc-side.is-winner .hc-side-val {
+      color: var(--brand-cyan-deep);
+    }
+
+    .hc-footer {
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px dashed var(--alabaster);
+      font-size: 11px;
+      color: var(--grey-500);
+      font-weight: 600;
+    }
+
+    .hc-footer span {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 600;
+    }
+
+    .hc-foot-pos {
+      background: var(--positive-light);
+      color: var(--positive);
+    }
+
+    .hc-foot-neg {
+      background: var(--negative-light);
+      color: var(--negative);
+    }
+
+    .hc-foot-neu {
+      background: #f0f0f0;
+      color: var(--grey-700);
+    }
+
+    /* ─── FOOTER ─── */
+    footer {
+      background: var(--brand-black);
+      color: rgba(255, 255, 255, 0.45);
+      font-size: 11px;
+      text-align: center;
+      padding: 16px;
+      border-top: 2px solid var(--brand-cyan-deep);
+      margin-top: auto;
+      /* Ensures it stays at the very bottom of the flex container */
     }

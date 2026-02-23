@@ -1227,11 +1227,18 @@ async function updateCO2() {
 
   // Comparisons
   const cmpEl = document.getElementById('co2-comparisons');
-  if (cmpEl && result.savingKgYear > 0) {
-    cmpEl.style.display = 'flex';
+  const toggleBtn = document.querySelector('.co2-details-toggle');
+
+  if (cmpEl && toggleBtn && result.savingKgYear > 0) {
+    toggleBtn.style.display = 'flex';
+    // Let the CSS classes handle display for cmpEl when opened, don't force 'flex' directly on load
     set('co2-cmp-auto', f(result.autoKm));
     set('co2-cmp-trees', f(result.trees));
     set('co2-cmp-flights', result.flights);
+  } else if (toggleBtn && cmpEl) {
+    toggleBtn.style.display = 'none';
+    cmpEl.classList.remove('open');
+    toggleBtn.classList.remove('open');
   }
 
   // Source
@@ -1308,6 +1315,21 @@ async function updatePowerMix() {
 function calcAndUpdate() {
   calc();
   updateCO2();
+}
+
+// CO2 comparisons toggle logic
+function toggleCo2Details(btn) {
+  const compEl = document.getElementById('co2-comparisons');
+  if (!compEl) return;
+
+  const isOpening = !compEl.classList.contains('open');
+  compEl.classList.toggle('open', isOpening);
+  btn.classList.toggle('open', isOpening);
+
+  const textSpan = btn.querySelector('.co2-dt-text');
+  if (textSpan) {
+    textSpan.textContent = isOpening ? 'Details ausblenden' : 'Details einblenden';
+  }
 }
 
 // Initial fetch on load

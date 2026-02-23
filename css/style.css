@@ -371,7 +371,7 @@
       position: relative;
     }
 
-    .split-bar > div {
+    .split-bar>div {
       display: flex;
       align-items: center;
       justify-content: center;
@@ -2513,12 +2513,49 @@
       margin-top: 2px;
     }
 
-    .co2-comparisons {
+    .co2-details-toggle {
+      width: 100%;
+      background: none;
+      border: 1px dashed var(--grey-300);
+      border-radius: 6px;
+      padding: 6px;
+      margin-top: 6px;
       display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      font-size: 10px;
+      color: var(--grey-600);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .co2-details-toggle:hover {
+      background: var(--surface);
+      border-color: var(--grey-400);
+      color: var(--brand-black);
+    }
+
+    .co2-details-toggle svg {
+      width: 12px;
+      height: 12px;
+      fill: currentColor;
+      transition: transform 0.2s;
+    }
+
+    .co2-details-toggle.open svg {
+      transform: rotate(180deg);
+    }
+
+    .co2-comparisons {
+      display: none;
       flex-direction: column;
       gap: 6px;
       padding: 10px 0 4px;
-      border-top: 1px dashed var(--alabaster);
+    }
+
+    .co2-comparisons.open {
+      display: flex;
     }
 
     .co2-cmp {
@@ -2637,6 +2674,7 @@
       padding: 20px 0;
       text-align: center;
     }
+
     /* ══════════════════════════════════════════════════════
        RESPONSIVE DESIGN
        ══════════════════════════════════════════════════════ */
@@ -2645,41 +2683,51 @@
       .layout {
         grid-template-columns: 300px 1fr;
       }
+
       .main {
         padding: 16px 20px 40px 20px;
       }
+
       .compare-grid {
         grid-template-columns: 1fr;
         gap: 16px;
       }
+
       .cg-vs {
         flex-direction: row;
         justify-content: center;
         padding: 8px 0;
       }
+
       .vs-line {
         width: 60px;
         height: 1px;
       }
+
       .yr25-grid {
         grid-template-columns: 1fr;
         gap: 16px;
       }
+
       .flow {
         flex-direction: column;
       }
+
       .flow-source {
         flex-direction: row;
         min-width: unset;
         padding: 12px 16px;
         gap: 12px;
       }
+
       .flow-arrow {
         display: none;
       }
+
       .flow-splits {
         flex-direction: column;
       }
+
       .flow-split {
         border-left: none;
         border-top: 1px solid var(--alabaster);
@@ -2690,12 +2738,14 @@
       .layout {
         grid-template-columns: 1fr;
       }
+
       .sidebar {
         position: static;
         height: auto;
         border-right: none;
         border-bottom: 1px solid var(--alabaster);
       }
+
       .topbar {
         padding: 0 12px;
         gap: 8px;
@@ -2705,62 +2755,80 @@
         padding-top: 8px;
         padding-bottom: 8px;
       }
+
       .tb-logo-divider {
         display: none;
       }
+
       .tb-tarif-wrap {
         display: none;
       }
+
       .tb-app-name {
         font-size: 11px;
       }
+
       .main {
         padding: 12px 12px 30px 12px;
       }
+
       .hero-grid {
         grid-template-columns: 1fr;
       }
+
       .hc-compare {
         flex-direction: column;
         gap: 6px;
       }
+
       .hc-vs {
         display: none;
       }
+
       .kosten-grid {
         grid-template-columns: 1fr;
       }
+
       .section-nav {
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
         scrollbar-width: none;
       }
+
       .section-nav::-webkit-scrollbar {
         display: none;
       }
+
       .nav-pill {
         white-space: nowrap;
         font-size: 11px;
       }
+
       .tab-switcher {
         width: 100%;
       }
+
       .tab-btn {
         flex: 1;
       }
+
       .co2-detail-grid {
         grid-template-columns: 1fr;
       }
+
       .me-cells {
         grid-template-columns: 1fr 1fr;
       }
+
       .timeline-chart {
         font-size: 11px;
       }
+
       .delta-box {
         flex-direction: column;
         text-align: center;
       }
+
       .winner-box {
         flex-direction: column;
         text-align: center;
@@ -2771,24 +2839,31 @@
       html {
         font-size: 13px;
       }
+
       .me-cells {
         grid-template-columns: 1fr;
       }
+
       .pct-breakdown {
         flex-direction: column;
       }
+
       .split-bar {
         height: 24px;
       }
+
       .hc-side-val {
         font-size: 14px;
       }
+
       .co2-big-num {
         font-size: 22px;
       }
+
       .sc-cf-num {
         font-size: 22px;
       }
+
       .rb-val {
         font-size: 22px;
       }

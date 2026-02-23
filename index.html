@@ -399,6 +399,9 @@
           <a class="nav-pill" href="#herstellkosten" onclick="scrollToSection(event,'herstellkosten')">
             <span class="nav-pill-num">6</span>Herstellkosten
           </a>
+          <a class="nav-pill" href="#co2" onclick="scrollToSection(event,'co2')">
+            <span class="nav-pill-num">7</span>CO₂
+          </a>
         </nav>
       </div>
 
@@ -501,6 +504,48 @@
               <span id="hc-mi-badge" class="hc-foot-pos">Win-Win für alle Parteien</span>
             </div>
           </div>
+          <!-- CARD 5: CO₂-Fussabdruck -->
+          <div class="hero-card hc-co2">
+            <div class="hc-top">
+              <div class="hc-icon">🌱</div>
+              <div class="hc-title">CO₂-Einsparung pro Jahr</div>
+              <div class="co2-live-badge" id="co2-live-badge" style="display:none">
+                <span class="co2-live-dot"></span>Live
+              </div>
+            </div>
+            <div class="co2-main">
+              <div class="co2-big-num" id="co2-saving-year">—</div>
+              <div class="co2-big-unit">kg CO₂ / Jahr</div>
+            </div>
+            <div class="co2-sub-row">
+              <div class="co2-sub">
+                <div class="co2-sub-val" id="co2-saving-25y">—</div>
+                <div class="co2-sub-label">Tonnen über 25 Jahre</div>
+              </div>
+              <div class="co2-sub">
+                <div class="co2-sub-val" id="co2-grid-intensity">—</div>
+                <div class="co2-sub-label">gCO₂/kWh Netz (CH)</div>
+              </div>
+            </div>
+            <div class="co2-comparisons" id="co2-comparisons" style="display:none">
+              <div class="co2-cmp">
+                <span class="co2-cmp-icon">🚗</span>
+                <span class="co2-cmp-text"><b id="co2-cmp-auto">—</b> km Autofahrt</span>
+              </div>
+              <div class="co2-cmp">
+                <span class="co2-cmp-icon">🌳</span>
+                <span class="co2-cmp-text"><b id="co2-cmp-trees">—</b> Bäume (äquivalent)</span>
+              </div>
+              <div class="co2-cmp">
+                <span class="co2-cmp-icon">✈️</span>
+                <span class="co2-cmp-text"><b id="co2-cmp-flights">—</b> Flüge ZH–Mallorca</span>
+              </div>
+            </div>
+            <div class="co2-footer">
+              <span class="co2-source" id="co2-source">Quelle: Electricity Maps · Zone CH</span>
+            </div>
+          </div>
+
         </div>
 
         <!-- Timeline chart -->
@@ -1003,6 +1048,66 @@
                 </tr>
               </tbody>
             </table>
+          </div>
+        </section>
+
+        <!-- ⑦ CO₂-FUSSABDRUCK ─────────────────────────── -->
+        <section id="co2">
+          <div class="sh">
+            <div class="sh-num">7</div>
+            <h2>CO₂-Fussabdruck & Einsparung</h2>
+            <div class="sh-line"></div>
+          </div>
+
+          <div class="co2-detail-grid">
+            <!-- Left: Calculation breakdown -->
+            <div class="co2-detail-card">
+              <div class="co2-detail-title">Berechnungsgrundlage</div>
+              <table class="tbl">
+                <tbody>
+                  <tr>
+                    <td>Netz-CO₂-Intensität (Schweiz)</td>
+                    <td class="td-r" id="co2d-grid">—</td>
+                  </tr>
+                  <tr>
+                    <td>PV Lifecycle-Emissionen</td>
+                    <td class="td-r">26 gCO₂eq/kWh</td>
+                  </tr>
+                  <tr>
+                    <td>Netto CO₂-Differenz</td>
+                    <td class="td-r" id="co2d-diff">—</td>
+                  </tr>
+                  <tr>
+                    <td>Jahresproduktion PV-Anlage</td>
+                    <td class="td-r" id="co2d-prod">—</td>
+                  </tr>
+                  <tr class="tr-foot">
+                    <td>Jährliche CO₂-Einsparung</td>
+                    <td class="td-r" id="co2d-saving">—</td>
+                  </tr>
+                  <tr class="tr-foot">
+                    <td>CO₂-Einsparung über 25 Jahre</td>
+                    <td class="td-r" id="co2d-saving25">—</td>
+                  </tr>
+                </tbody>
+              </table>
+              <div class="co2-detail-note">
+                Netz-CO₂-Intensität: Echtzeit-Daten von Electricity Maps (Lifecycle, Zone CH).
+                PV-Emissionen: IPCC-Median für kristallines Silizium. Die Schweiz hat dank Wasserkraft und Kernenergie
+                eine der tiefsten Netz-Intensitäten Europas (~30–120 gCO₂eq/kWh).
+              </div>
+            </div>
+
+            <!-- Right: Power mix -->
+            <div class="co2-detail-card">
+              <div class="co2-detail-title">Aktueller Strommix Schweiz</div>
+              <div class="co2-mix-bars" id="co2-mix-bars">
+                <div class="co2-mix-loading">Strommix wird geladen…</div>
+              </div>
+              <div class="co2-detail-note" id="co2-mix-time">
+                Daten werden beim nächsten Adresseingabe-Update geladen.
+              </div>
+            </div>
           </div>
         </section>
 

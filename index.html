@@ -154,7 +154,7 @@
             <span class="tip" data-tip="Anzahl der Wohnungen im Mehrfamilienhaus">?</span>
           </div>
           <div class="ctrl">
-            <input type="number" id="anzahlWE" value="" min="1" oninput="calc()" placeholder="">
+            <input type="number" id="anzahlWE" value="" min="1" oninput="calcAndUpdate()" placeholder="">
             <span class="ctrl-unit">WE</span>
           </div>
         </div>
@@ -208,7 +208,7 @@
         <div class="field">
           <div class="field-label">Offerte exkl. MWST</div>
           <div class="ctrl">
-            <input type="number" id="offerte" value="" oninput="calc()" placeholder="">
+            <input type="number" id="offerte" value="" oninput="calcAndUpdate()" placeholder="">
             <span class="ctrl-unit">CHF</span>
           </div>
         </div>
@@ -302,7 +302,7 @@
 
         <div class="field">
           <div class="field-label">Abrechnungsmodul</div>
-          <select id="modulSelect" onchange="calc()"
+          <select id="modulSelect" onchange="calcAndUpdate()"
             style="width:100%; padding:10px; border:1px solid var(--border); border-radius:6px; background:white; font-family:'Manrope',sans-serif; color:var(--charcoal); font-size:13px; margin-top:4px;">
             <option value="L" selected>L (Voll: PDF & Mahnung)</option>
             <option value="M">M (Standard: PDF Versand)</option>

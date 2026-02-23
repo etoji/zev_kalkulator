@@ -49,7 +49,7 @@ function setToggle(k, v) {
   tog[k] = v;
   document.getElementById(`${k}-ja`).classList.toggle('on', v === 'ja');
   document.getElementById(`${k}-nein`).classList.toggle('on', v === 'nein');
-  calc();
+  calcAndUpdate();
 }
 
 // Toggle tariff detail collapse/expand
@@ -99,7 +99,7 @@ function setKuType(type) {
   window.kuType = type;
   document.getElementById('ku-vermieter').classList.toggle('on', type === 'vermieter');
   document.getElementById('ku-mieter').classList.toggle('on', type === 'mieter');
-  calc();
+  calcAndUpdate();
 }
 
 function setEvType(type) {
@@ -152,7 +152,7 @@ function updateEvValue() {
   }
 
   updateTariffPopup();
-  calc();
+  calcAndUpdate();
 }
 
 // Apply tariff data to the calculator and UI
@@ -290,7 +290,7 @@ function syncKwp() {
     eiv = Math.round(first30 * 350 + above30 * 220);
   }
   document.getElementById('foerderung').value = eiv > 0 ? eiv : '';
-  calc();
+  calcAndUpdate();
 }
 
 function onSplitSlider() {
@@ -309,7 +309,6 @@ function onSplitSlider() {
   document.getElementById('bar-ei-label').textContent = ei + '%';
 
   // Track fill (green section = ZEV portion of the 80% range)
-  const fillLeft = '20%';
   const fillRight = (ei / 80 * 100) + '%';
   const fill = document.getElementById('track-fill');
   if (fill) {
@@ -321,7 +320,7 @@ function onSplitSlider() {
   document.getElementById('pct-zev-val').textContent = zev + '%';
   document.getElementById('pct-einspeis-val').textContent = ei + '%';
 
-  calc();
+  calcAndUpdate();
 }
 
 /* \u2500\u2500 GeoAdmin Address Autocomplete \u2500\u2500 */
@@ -346,7 +345,10 @@ async function fetchAddresses(q) {
       data.results.forEach(res => {
         const div = document.createElement('div');
         div.className = 'addr-item';
-        div.innerHTML = res.attrs.label;
+        // Sanitize: GeoAdmin returns HTML in label — extract text safely
+        const sanitizer = document.createElement('span');
+        sanitizer.innerHTML = res.attrs.label;
+        div.textContent = sanitizer.textContent;
         div.addEventListener('click', () => onAddressSelect(res));
         dd.appendChild(div);
       });
@@ -360,9 +362,11 @@ async function fetchAddresses(q) {
 function onAddressSelect(res) {
   const dd = document.getElementById('addrDropdown');
   dd.classList.remove('open');
+  // Sanitize: extract plain text from HTML label
   const tmp = document.createElement('span');
+  tmp.textContent = '';
   tmp.innerHTML = res.attrs.label;
-  document.getElementById('objektName').value = tmp.textContent;
+  document.getElementById('objektName').value = tmp.textContent || '';
   selectedCoords = { x: res.attrs.y, y: res.attrs.x };
   fetchSolarPotential(selectedCoords.x, selectedCoords.y);
   // Use GeoAdmin municipality layer to get BFS number reliably
@@ -428,103 +432,7 @@ async function fetchMunicipalityAndTariff(x, y) {
   // Save bfsNr on the dropdown so changing Tariff settings later can reuse it
   if (bfsNr) {
     document.getElementById('addrDropdown').dataset.bfsNr = bfsNr;
-  }
-
-  // Step 2a: Try ElCom GraphQL API (updated schema 2026)
-  if (bfsNr) {
-    const gqlBody = {
-      operationName: 'ObservationsWithAllPriceComponents',
-      query: `query ObservationsWithAllPriceComponents($locale: String!, $filters: ObservationFilters!, $observationKind: ObservationKind) {
-        observations(locale: $locale, filters: $filters, observationKind: $observationKind) {
-          period municipality operatorLabel category
-          energy: value(priceComponent: energy)
-          gridusage: value(priceComponent: gridusage)
-          charge: value(priceComponent: charge)
-          aidfee: value(priceComponent: aidfee)
-          total: value(priceComponent: total)
-        }
-      }`,
-      variables: {
-        filters: { category: ['H4'], municipality: [bfsNr], period: ['2026'], product: ['standard'] },
-        locale: 'de',
-        observationKind: 'Municipality'
-      }
-    };
-
-    const gqlUrl = 'https://www.strompreis.elcom.admin.ch/api/graphql';
-    let gqlData = null;
-
-    // Try direct POST (in case ElCom adds CORS headers in the future)
-    try {
-      const r = await fetch(gqlUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(gqlBody)
-      });
-      if (r.ok) gqlData = await r.json();
-    } catch (e) { /* CORS blocked — expected on GitHub Pages */ }
-
-    // Try via corsproxy.io (supports POST)
-    if (!gqlData) {
-      try {
-        const r = await fetch('https://corsproxy.io/?' + encodeURIComponent(gqlUrl), {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(gqlBody)
-        });
-        if (r.ok) gqlData = await r.json();
-      } catch (e) { console.warn('GraphQL proxy failed:', e.message); }
-    }
-
-    if (gqlData?.data?.observations?.length) {
-      const t = gqlData.data.observations[0];
-      console.log('ElCom API success:', t.operatorLabel, 'total:', t.total);
-      applyTariff(
-        t.operatorLabel || 'Unbekannt',
-        Number(t.total), Number(t.energy),
-        Number(t.gridusage), Number(t.charge), Number(t.aidfee)
-      );
-      return; // Done — real API data!
-    }
-  }
-
-  // Step 2b: Fallback — get operator name from ElCom HTML page via CORS proxy
-  let operatorName = null;
-  if (bfsNr) {
-    const pageUrl = `https://www.strompreis.elcom.admin.ch/de/municipality/${bfsNr}`;
-    const proxies = [
-      `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(pageUrl)}`,
-      `https://api.allorigins.win/raw?url=${encodeURIComponent(pageUrl)}`,
-      `https://corsproxy.io/?${encodeURIComponent(pageUrl)}`
-    ];
-
-    for (const proxyUrl of proxies) {
-      try {
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 6000);
-        const r = await fetch(proxyUrl, { signal: controller.signal });
-        clearTimeout(timeout);
-        if (!r.ok) continue;
-        const html = await r.text();
-        const match = html.match(/<script id="__NEXT_DATA__"[^>]*>(.*?)<\/script>/);
-        if (match) {
-          const nd = JSON.parse(match[1]);
-          const ops = nd?.props?.pageProps?.operators;
-          if (ops && ops.length) {
-            operatorName = ops[0].name;
-            console.log('ElCom operator (HTML):', operatorName);
-            break;
-          }
-        }
-      } catch (e) {
-        console.warn('ElCom HTML proxy failed:', e.message || e);
-      }
-    }
-  }
-
-  // Step 3: Apply tariff from local data
-  if (operatorName) {
-    applyOperatorOnly(operatorName);
+    fetchElcomTariff(bfsNr, gemName);
   } else if (gemName) {
     applyOperatorOnly(gemName);
   } else {
@@ -598,12 +506,6 @@ async function fetchSolarPotential(x, y) {
   }
 }
 
-// Close dropdown when clicking outside
-document.addEventListener('click', (e) => {
-  if (!e.target.closest('.addr-wrap')) {
-    document.getElementById('addrDropdown').classList.remove('open');
-  }
-});
 
 /* \u2500\u2500 ElCom Tariff Auto-Detection \u2500\u2500 */
 
@@ -614,7 +516,7 @@ function onTariffCategoryChange() {
   }
 }
 
-async function fetchElcomTariff(bfsNr) {
+async function fetchElcomTariff(bfsNr, fallbackGemName = null) {
   const info = document.getElementById('tariffInfo');
   info.classList.remove('visible');
   document.getElementById('tariffLoading').style.display = 'block';
@@ -677,18 +579,25 @@ SELECT ?operator ?total ?energy ?gridusage ?charge ?aidfee ?period WHERE {
     console.warn('LINDAS SPARQL fetch failed:', e);
   }
 
-  // Fallback: If LINDAS fails or returns no data, try to apply operator from local data.js if exists
-  if (gemName) {
-    applyOperatorOnly(gemName);
+  // Fallback: If LINDAS fails or returns no data, try to apply operator from local data
+  if (fallbackGemName) {
+    applyOperatorOnly(fallbackGemName);
+  } else if (window.lastOperatorName) {
+    applyOperatorOnly(window.lastOperatorName);
   } else {
     document.getElementById('tariffLoading').style.display = 'none';
   }
 }
 
+// ── Formatierung & Hilfsfunktionen ──
 function f(v, dec = 0) {
   return v.toLocaleString('de-CH', { minimumFractionDigits: dec, maximumFractionDigits: dec });
 }
-function set(id, v) { const e = document.getElementById(id); if (e) e.textContent = v; }
+
+function set(id, v) {
+  const e = document.getElementById(id);
+  if (e) e.textContent = v;
+}
 
 function clearCalc() {
   const ids = [
@@ -717,52 +626,36 @@ function clearCalc() {
   if (crossLeg) crossLeg.style.display = 'none';
 }
 
-function calc() {
-  const we = +document.getElementById('anzahlWE').value || 1;
-  const off = +document.getElementById('offerte').value || 0;
-  const foe = +document.getElementById('foerderung').value || 0;
-  const pro = +document.getElementById('produktion').value || 0;
+// ── Input Validation ──
+function clampInput(id, min, max, fallback) {
+  const raw = +document.getElementById(id).value;
+  if (isNaN(raw) || raw < min) return fallback;
+  return Math.min(raw, max);
+}
 
-  if (off === 0 || pro === 0) {
-    clearCalc();
-    return;
-  }
+// ── Pure Calculation (no DOM access) ──
+function calculateScenarios(inputs) {
+  const { we, off, foe, pro, pctZev, pctEi, pctEigen, modul, hasBoiler, sp, ev, zt, zm } = inputs;
 
-  const pctZev = +document.getElementById('sl-split').value;
-  const pctEi = 80 - pctZev;
-  const pctEigen = 20;
-  const total = 100; // always 100 now
-
-  const sp = T.sp / 100;
-  const ev = T.ev / 100;
-  const zt = T.zt / 100;
-
-  // HK
+  // Herstellkosten (HK)
   const inv = off - foe;
   const uh25 = inv * 0.015 * 25;
   const tk25 = inv + uh25 + 4000 + 3000;
   const p25 = pro * 25 * 0.8;
   const hk = p25 > 0 ? tk25 / p25 : 0;
 
-  // Variables from UI
-  const modul = document.getElementById('modulSelect').value || 'L';
-  const hasBoiler = tog.bo === 'ja';
-
-  // Number of meters (Wohneinheiten + 1 Allgemein + WP + eMobilität + Boiler)
-  const anzahlNe = we + 1; // Number of billing units
+  // Number of meters & billing units
+  const anzahlNe = we + 1;
   const anzahlZaehler = we + 1 + (tog.wp === 'ja' ? 1 : 0) + (tog.em === 'ja' ? 1 : 0) + (hasBoiler ? 1 : 0);
 
-  // Server Type (S <= 15 NE, M > 15 NE)
+  // Server type
   const serverTyp = (we <= 15) ? 'S' : 'M';
 
-  // --- ZEV Kosten Einmalig ---
-
-  // Vertragskosten
+  // ZEV Kosten Einmalig
   const vertragInkl = PREISKATALOG.vertrag.inkl_tl;
   const vertragZusatz = Math.max(0, we - vertragInkl) * PREISKATALOG.vertrag.zusatz_pro_tl;
   const vertragKosten = PREISKATALOG.vertrag.einmalig_basis + vertragZusatz;
 
-  // Grundkosten
   const grundkostenEinmalig =
     PREISKATALOG.server[serverTyp].einmalig
     + PREISKATALOG.einbau_server.einmalig
@@ -772,26 +665,21 @@ function calc() {
     + (tog.be === 'ja' ? PREISKATALOG.begehung.einmalig : 0)
     + (tog.zv === 'ja' ? vertragKosten : 0);
 
-  // Variable Kosten (pro Zähler)
   const kostenProZaehlerEinmalig =
     PREISKATALOG.zaehler.einmalig_pro_stueck
     + PREISKATALOG.abrechnungsmodul[modul].einmalig_pro_ne;
 
   const variableKostenEinmalig = anzahlZaehler * kostenProZaehlerEinmalig;
+  const totE = grundkostenEinmalig + variableKostenEinmalig;
 
-  const totE = grundkostenEinmalig + variableKostenEinmalig; // Total Einmalig
-
-  // --- ZEV Kosten Wiederkehrend (pro Jahr) ---
+  // ZEV Kosten Wiederkehrend (pro Jahr)
   const grundkostenJaehrlich =
     PREISKATALOG.server[serverTyp].jaehrlich
     + (tog.po === 'ja' ? PREISKATALOG.portal.jaehrlich : 0)
     + (tog.iz === 'ja' ? PREISKATALOG.internetzugang.jaehrlich : 0);
 
   const variableKostenJaehrlich = anzahlNe * PREISKATALOG.abrechnungsmodul[modul].jaehrlich_pro_ne;
-
-  // totW is the operating cost borne by the landlord/ZEV system owner.
-  // If the costs are passed down as Nebenkosten to tenants, the landlord doesn't pay them out of the solar profit margin.
-  const totW = grundkostenJaehrlich + (window.kuType === 'vermieter' ? variableKostenJaehrlich : 0); // Total Wiederkehrend
+  const totW = grundkostenJaehrlich + (window.kuType === 'vermieter' ? variableKostenJaehrlich : 0);
 
   // Ohne ZEV (fixed 20/80)
   const no_e_kwh = pro * 0.20;
@@ -799,9 +687,7 @@ function calc() {
   const no_e_chf = no_e_kwh * sp;
   const no_ei_chf = no_ei_kwh * ev;
   const no_cf = no_e_chf + no_ei_chf;
-
-  // Amortisation (Payback Period) = Investment / Annual Cashflow
-  const no_amor = no_cf > 0 ? inv / no_cf : 0;
+  const no_amor = no_cf > 0 ? inv / no_cf : Infinity;
 
   // Mit ZEV (adjustable)
   const z_e_kwh = pro * pctEigen / 100;
@@ -811,225 +697,235 @@ function calc() {
   const z_z_chf = z_z_kwh * zt;
   const z_ei_chf = z_ei_kwh * ev;
   const z_cf = z_e_chf + z_z_chf + z_ei_chf;
-
-  // Amortisation = Total Investment / (Revenues - ZEV Operating Costs)
-  const z_amor = (z_cf - totW) > 0 ? (inv + totE) / (z_cf - totW) : 0;
+  const z_amor = (z_cf - totW) > 0 ? (inv + totE) / (z_cf - totW) : Infinity;
 
   // Mieter
   const m_str = (z_z_kwh / we) * (sp - zt);
-  const m_zk = T.zm * 12;
-  // If passed to tenant, they pay it. If landlord pays it from margin, tenant effectively doesn't see it as an extra cost reducing their savings.
+  const m_zk = zm * 12;
   const m_zev = window.kuType === 'mieter' ? -PREISKATALOG.abrechnungsmodul[modul].jaehrlich_pro_ne : 0;
   const m_tot = m_str + m_zk + m_zev;
 
-  // Flow section
-  set('f-prod', f(pro) + ' kWh');
-  set('f-prod2', f(pro) + ' kWh');
-  set('f-no-e-kwh', f(Math.round(no_e_kwh)) + ' kWh');
-  set('f-no-e-chf', f(no_e_chf, 2));
-  set('f-no-ei-kwh', f(Math.round(no_ei_kwh)) + ' kWh');
-  set('f-no-ei-chf', f(no_ei_chf, 2));
-  set('f-zev-e-kwh', f(Math.round(z_e_kwh)) + ' kWh');
-  set('f-zev-e-chf', f(z_e_chf, 2));
-  set('f-zev-z-kwh', f(Math.round(z_z_kwh)) + ' kWh');
-  set('f-zev-z-chf', f(z_z_chf, 2));
-  set('f-zev-ei-kwh', f(Math.round(z_ei_kwh)) + ' kWh');
-  set('f-zev-ei-chf', f(z_ei_chf, 2));
-  set('f-zev-pct', pctZev + '%');
-  set('f-einspeis-pct', pctEi + '%');
-
-  // Compare
-  set('no-cf', f(no_cf, 2));
-  set('no-amor', f(no_amor, 2) + ' Jahre');
-  set('no-e-kwh', f(Math.round(no_e_kwh)) + ' kWh');
-  set('no-e-chf', f(no_e_chf, 2) + ' CHF');
-  set('no-ei-kwh', f(Math.round(no_ei_kwh)) + ' kWh');
-  set('no-ei-chf', f(no_ei_chf, 2) + ' CHF');
-
-  set('zev-cf', f(z_cf, 2));
-  set('zev-amor', (z_amor > 0 ? f(z_amor, 2) : '\u2014') + ' Jahre');
-  set('zev-e-kwh', f(Math.round(z_e_kwh)) + ' kWh');
-  set('zev-e-chf', f(z_e_chf, 2) + ' CHF');
-  set('zev-z-kwh', f(Math.round(z_z_kwh)) + ' kWh');
-  set('zev-z-chf', f(z_z_chf, 2) + ' CHF');
-  set('zev-ei-kwh', f(Math.round(z_ei_kwh)) + ' kWh');
-  set('zev-ei-chf', f(z_ei_chf, 2) + ' CHF');
-  set('zev-z-pct', pctZev + '%');
-  set('zev-ei-pct', pctEi + '%');
-
-  // Delta
-  const diff = z_cf - no_cf;
-  const isDiffPositive = diff >= 0;
-
-  document.getElementById('delta-chf').textContent = (isDiffPositive ? '+' : '\u2212') + f(Math.round(Math.abs(diff)));
-
-  if (isDiffPositive) {
-    set('delta-desc', `Mit ZEV erzielen Sie ${f(Math.round(diff))} CHF mehr Einnahmen pro Jahr. Dies entspricht ${f(diff / no_cf * 100, 1)}% mehr j\u00E4hrliche Rendite als ohne ZEV.`);
-  } else {
-    set('delta-desc', `Ohne ZEV erzielen Sie ${f(Math.round(Math.abs(diff)))} CHF mehr Einnahmen pro Jahr. ZEV reduziert Ihre j\u00E4hrliche Rendite um ${f(Math.abs(diff / no_cf * 100), 1)}%.`);
-  }
-
-  // Hero Card 1 (Cashflow)
-  const hcCfNoBox = document.getElementById('hc-cf-no-box');
-  if (hcCfNoBox) {
-    const zevWinsCf = z_cf >= no_cf;
-    set('hc-cf-no-val', f(Math.round(no_cf)) + ' CHF');
-    hcCfNoBox.className = 'hc-side ' + (zevWinsCf ? 'is-loser' : 'is-winner');
-    document.getElementById('hc-cf-no-badge').style.display = zevWinsCf ? 'none' : 'inline-block';
-
-    set('hc-cf-zev-val', f(Math.round(z_cf)) + ' CHF');
-    document.getElementById('hc-cf-zev-box').className = 'hc-side ' + (zevWinsCf ? 'is-winner' : 'is-loser');
-    document.getElementById('hc-cf-zev-badge').style.display = zevWinsCf ? 'inline-block' : 'none';
-
-    const cfBadge = document.getElementById('hc-rendite-badge');
-    if (cfBadge) {
-      cfBadge.textContent = `Differenz: ${(diff >= 0 ? '+' : '\u2212')} ${f(Math.round(Math.abs(diff)))} CHF / Jahr`;
-      cfBadge.className = diff >= 0 ? 'hc-foot-pos' : 'hc-foot-neg';
-    }
-  }
-
-  // Hero Card 2 (Amortisation)
-  const hcAmNoBox = document.getElementById('hc-am-no-box');
-  if (hcAmNoBox) {
-    const fmtAmor = (val) => (val > 0 && val < 99) ? f(val, 1) + ' Jahre' : '> 25 Jahre';
-    const aNo = (no_amor > 0 && no_amor < 99) ? no_amor : Infinity;
-    const aZev = (z_amor > 0 && z_amor < 99) ? z_amor : Infinity;
-
-    // ZEV wins if its amortization is lower or equal, AND it's not infinity
-    const zevWinsAmor = (aZev <= aNo) && (aZev !== Infinity);
-    const noWinsAmor = (aNo < aZev) && (aNo !== Infinity);
-
-    set('hc-am-no-val', fmtAmor(no_amor));
-    hcAmNoBox.className = 'hc-side ' + (noWinsAmor ? 'is-winner' : (zevWinsAmor ? 'is-loser' : ''));
-    document.getElementById('hc-am-no-badge').style.display = noWinsAmor ? 'inline-block' : 'none';
-
-    set('hc-am-zev-val', fmtAmor(z_amor));
-    document.getElementById('hc-am-zev-box').className = 'hc-side ' + (zevWinsAmor ? 'is-winner' : (noWinsAmor ? 'is-loser' : ''));
-    document.getElementById('hc-am-zev-badge').style.display = zevWinsAmor ? 'inline-block' : 'none';
-
-    const amBadge = document.getElementById('hc-am-badge');
-    if (amBadge) {
-      if (aNo === Infinity && aZev === Infinity) {
-        amBadge.textContent = 'Beide unwirtschaftlich';
-        amBadge.className = 'hc-foot-neg';
-      } else if (aNo === Infinity) {
-        amBadge.textContent = 'Ohne ZEV nicht amortisierbar';
-        amBadge.className = 'hc-foot-pos';
-      } else if (aZev === Infinity) {
-        amBadge.textContent = 'Mit ZEV nicht amortisierbar';
-        amBadge.className = 'hc-foot-neg';
-      } else {
-        const amDiff = aZev - aNo;
-        // If amDiff > 0, ZEV takes longer, which is worse for ZEV -> Negative badge.
-        amBadge.textContent = `Differenz: ${(amDiff > 0 ? '+' : '\u2212')} ${f(Math.abs(amDiff), 1)} Jahre`;
-        amBadge.className = amDiff <= 0 ? 'hc-foot-pos' : 'hc-foot-neg';
-      }
-    }
-  }
-
-  // \u2500\u2500 25 JAHRE \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+  // 25 Jahre
   const yrs = 25;
   const no_ein25 = no_cf * yrs;
-  const no_total25 = no_ein25 - tk25; // Revenues minus ALL PV costs (Inv + maint over 25y)
-
+  const no_total25 = no_ein25 - tk25;
   const zev_ein25 = z_cf * yrs;
-  const zev_inv25 = tk25 + totE; // PV Total costs + ZEV initial costs
+  const zev_inv25 = tk25 + totE;
   const zev_total25 = zev_ein25 - zev_inv25 - (totW * yrs);
-
   const gain25diff = zev_total25 - no_total25;
 
-  const signNoEin = no_ein25 < 0 ? '\u2212' : '+';
-  set('y25-no-ein', signNoEin + f(Math.abs(Math.round(no_ein25))) + ' CHF');
-  set('y25-no-inv', '\u2212' + f(Math.abs(Math.round(inv))) + ' CHF');
-  set('y25-no-amor', f(no_amor, 1) + ' Jahre');
-  set('y25-no-total', f(Math.round(no_total25)) + ' CHF');
-
-  const signZevEin = zev_ein25 < 0 ? '\u2212' : '+';
-  set('y25-zev-ein', signZevEin + f(Math.abs(Math.round(zev_ein25))) + ' CHF');
-  set('y25-zev-inv', '\u2212' + f(Math.abs(Math.round(zev_inv25))) + ' CHF');
-  set('y25-zev-op', '\u2212' + f(Math.abs(Math.round(totW * yrs))) + ' CHF');
-  set('y25-zev-amor', (z_amor > 0 ? f(z_amor, 1) : '\u2014') + ' Jahre');
-  set('y25-zev-total', f(Math.round(zev_total25)) + ' CHF');
-
-  // Hero Card 3 (25 Jahre Profit)
-  const hc25NoBox = document.getElementById('hc-25-no-box');
-  if (hc25NoBox) {
-    const zevWins25 = zev_total25 >= no_total25;
-
-    set('hc-25-no-val', f(Math.round(no_total25)) + ' CHF');
-    hc25NoBox.className = 'hc-side ' + (zevWins25 ? 'is-loser' : 'is-winner');
-    document.getElementById('hc-25-no-badge').style.display = zevWins25 ? 'none' : 'inline-block';
-
-    set('hc-25-zev-val', f(Math.round(zev_total25)) + ' CHF');
-    document.getElementById('hc-25-zev-box').className = 'hc-side ' + (zevWins25 ? 'is-winner' : 'is-loser');
-    document.getElementById('hc-25-zev-badge').style.display = zevWins25 ? 'inline-block' : 'none';
-
-    const y25Badge = document.getElementById('hc-25-badge');
-    if (y25Badge) {
-      const y25Diff = zev_total25 - no_total25;
-      y25Badge.textContent = `Differenz: ${(y25Diff >= 0 ? '+' : '\u2212')} ${f(Math.round(Math.abs(y25Diff)))} CHF`;
-      y25Badge.className = y25Diff >= 0 ? 'hc-foot-pos' : 'hc-foot-neg';
-    }
-  }
-
-  // Winner box & Dynamic Styling
-  set('wb-val', f(Math.round(Math.abs(gain25diff))));
-  const zevWins = gain25diff >= 0;
-
-  // Dynamic UI highlighting
-  document.getElementById('delta-box').className = 'delta-box ' + (zevWins ? '' : 'is-negative');
-  document.getElementById('sc-head-A').className = 'sc-head ' + (zevWins ? 'is-loser' : 'is-winner');
-  document.getElementById('sc-head-B').className = 'sc-head ' + (zevWins ? 'is-winner' : 'is-loser');
-  document.getElementById('yc-head-A').className = 'yr25-card-head ' + (zevWins ? 'is-loser' : 'is-winner');
-  document.getElementById('yc-head-B').className = 'yr25-card-head ' + (zevWins ? 'is-winner' : 'is-loser');
-
-  document.getElementById('sc-label-A').textContent = 'Szenario A' + (zevWins ? '' : ' — Empfohlen');
-  document.getElementById('sc-label-B').textContent = 'Szenario B' + (zevWins ? ' — Empfohlen' : '');
-  document.getElementById('yc-label-A').textContent = 'Szenario A' + (zevWins ? '' : ' — Empfohlen');
-  document.getElementById('yc-label-B').textContent = 'Szenario B' + (zevWins ? ' — Empfohlen' : '');
-
-  document.getElementById('wb-title').textContent = zevWins
-    ? 'ZEV erzielt \u00FCber 25 Jahre einen h\u00F6heren Gesamtgewinn'
-    : 'Ohne ZEV ist in diesem Szenario rentabler';
-  document.getElementById('wb-desc').textContent = zevWins
-    ? `Obwohl die Amortisationszeit mit ZEV ${f(Math.abs(z_amor - no_amor), 1)} Jahre l\u00E4nger dauert, ` +
-    `\u00FCberwiegen die h\u00F6heren j\u00E4hrlichen Ertr\u00E4ge deutlich. Nach ${f(z_amor > 0 ? z_amor : 0, 1)} Jahren ` +
-    `ist die Investition vollst\u00E4ndig amortisiert \u2014 danach erzielen Sie jedes Jahr ${f(Math.round(diff))} CHF mehr Ertrag.`
-    : `In diesem Szenario fressen die wiederkehrenden ZEV-Kosten (Abrechnung etc.) den Gewinn der Stromeinsparung auf. ZEV ist hier ein Verlustgesch\u00E4ft im Vergleich zur einfachen Überschusseinspeisung.`;
-
-  // \u2500\u2500 TIMELINE CHART \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
-  const chartEl = document.getElementById('timeline-chart');
-  chartEl.innerHTML = '';
-
-  // Find max cumulative value for scaling
-  let maxVal = 0;
-  let crossoverYear = null;
-  const noVals = [], zevVals = [];
-
-  // Ongoing PV maintenance & replacements (total costs minus initial investment)
+  // Timeline data
   const maintenance_per_year = (tk25 - inv) / yrs;
   const no_net_yearly = no_cf - maintenance_per_year;
   const zev_net_yearly = (z_cf - totW) - maintenance_per_year;
-
-  // Initial investment debt at year 0:
   const no_start_debt = inv;
   const zev_start_debt = inv + totE;
 
+  const timeline = { noVals: [], zevVals: [], crossoverYear: null, maxVal: 0 };
   for (let y = 1; y <= yrs; y++) {
-    // Cumulative cash flow vs initial debt
     const nv = (no_net_yearly * y) - no_start_debt;
     const zv = (zev_net_yearly * y) - zev_start_debt;
-    noVals.push(nv);
-    zevVals.push(zv);
-    maxVal = Math.max(maxVal, Math.abs(nv), Math.abs(zv));
-    if (crossoverYear === null && zv > nv) crossoverYear = y;
+    timeline.noVals.push(nv);
+    timeline.zevVals.push(zv);
+    timeline.maxVal = Math.max(timeline.maxVal, Math.abs(nv), Math.abs(zv));
+    if (timeline.crossoverYear === null && zv > nv) timeline.crossoverYear = y;
   }
-  // Calculate scale (max width for one side is 50% to leave room for the center line)
-  // we use maxVal / 0.45 so the largest bar takes up 45% of the total width (leaving 5% margin)
-  const scale = v => Math.min(48, Math.abs(v) / maxVal * 45);
 
-  // Show every 5th year + year 1
+  return {
+    // Inputs forwarded
+    we, pro, inv, modul, serverTyp, pctZev, pctEi, pctEigen,
+    // Herstellkosten
+    hk, uh25, tk25, p25,
+    // ZEV Kosten
+    totE, totW, anzahlNe, anzahlZaehler, vertragKosten,
+    grundkostenEinmalig, variableKostenEinmalig, variableKostenJaehrlich,
+    // Ohne ZEV
+    no_e_kwh, no_ei_kwh, no_e_chf, no_ei_chf, no_cf, no_amor,
+    // Mit ZEV
+    z_e_kwh, z_z_kwh, z_ei_kwh, z_e_chf, z_z_chf, z_ei_chf, z_cf, z_amor,
+    // Mieter
+    m_str, m_zk, m_zev, m_tot,
+    // 25 Jahre
+    no_ein25, no_total25, zev_ein25, zev_inv25, zev_total25, gain25diff,
+    // Timeline
+    timeline
+  };
+}
+
+// ── Hero Card Helper (DRY) ──
+function updateHeroCardCompare(prefix, noVal, zevVal, noWins, badgeText, badgeClass) {
+  set(`hc-${prefix}-no-val`, noVal);
+  set(`hc-${prefix}-zev-val`, zevVal);
+
+  const noBox = document.getElementById(`hc-${prefix}-no-box`);
+  const zevBox = document.getElementById(`hc-${prefix}-zev-box`);
+  if (!noBox || !zevBox) return;
+
+  noBox.className = 'hc-side ' + (noWins ? 'is-winner' : 'is-loser');
+  zevBox.className = 'hc-side ' + (noWins ? 'is-loser' : 'is-winner');
+
+  const noBadge = document.getElementById(`hc-${prefix}-no-badge`);
+  const zevBadge = document.getElementById(`hc-${prefix}-zev-badge`);
+  if (noBadge) noBadge.style.display = noWins ? 'inline-block' : 'none';
+  if (zevBadge) zevBadge.style.display = noWins ? 'none' : 'inline-block';
+
+  if (badgeText !== undefined) {
+    const badge = document.getElementById(`hc-${prefix}-badge`) || document.getElementById(`hc-rendite-badge`);
+    if (badge) {
+      badge.textContent = badgeText;
+      badge.className = badgeClass || 'hc-foot-neu';
+    }
+  }
+}
+
+// ── Render: Flow Section ──
+function renderFlowSection(r) {
+  set('f-prod', f(r.pro) + ' kWh');
+  set('f-prod2', f(r.pro) + ' kWh');
+  set('f-no-e-kwh', f(Math.round(r.no_e_kwh)) + ' kWh');
+  set('f-no-e-chf', f(r.no_e_chf, 2));
+  set('f-no-ei-kwh', f(Math.round(r.no_ei_kwh)) + ' kWh');
+  set('f-no-ei-chf', f(r.no_ei_chf, 2));
+  set('f-zev-e-kwh', f(Math.round(r.z_e_kwh)) + ' kWh');
+  set('f-zev-e-chf', f(r.z_e_chf, 2));
+  set('f-zev-z-kwh', f(Math.round(r.z_z_kwh)) + ' kWh');
+  set('f-zev-z-chf', f(r.z_z_chf, 2));
+  set('f-zev-ei-kwh', f(Math.round(r.z_ei_kwh)) + ' kWh');
+  set('f-zev-ei-chf', f(r.z_ei_chf, 2));
+  set('f-zev-pct', r.pctZev + '%');
+  set('f-einspeis-pct', r.pctEi + '%');
+}
+
+// ── Render: Compare Section ──
+function renderCompareSection(r) {
+  set('no-cf', f(r.no_cf, 2));
+  set('no-amor', f(r.no_amor, 2) + ' Jahre');
+  set('no-e-kwh', f(Math.round(r.no_e_kwh)) + ' kWh');
+  set('no-e-chf', f(r.no_e_chf, 2) + ' CHF');
+  set('no-ei-kwh', f(Math.round(r.no_ei_kwh)) + ' kWh');
+  set('no-ei-chf', f(r.no_ei_chf, 2) + ' CHF');
+
+  set('zev-cf', f(r.z_cf, 2));
+  set('zev-amor', (isFinite(r.z_amor) ? f(r.z_amor, 2) : '\u2014') + ' Jahre');
+  set('zev-e-kwh', f(Math.round(r.z_e_kwh)) + ' kWh');
+  set('zev-e-chf', f(r.z_e_chf, 2) + ' CHF');
+  set('zev-z-kwh', f(Math.round(r.z_z_kwh)) + ' kWh');
+  set('zev-z-chf', f(r.z_z_chf, 2) + ' CHF');
+  set('zev-ei-kwh', f(Math.round(r.z_ei_kwh)) + ' kWh');
+  set('zev-ei-chf', f(r.z_ei_chf, 2) + ' CHF');
+  set('zev-z-pct', r.pctZev + '%');
+  set('zev-ei-pct', r.pctEi + '%');
+
+  // Delta
+  const diff = r.z_cf - r.no_cf;
+  const isDiffPositive = diff >= 0;
+  document.getElementById('delta-chf').textContent = (isDiffPositive ? '+' : '\u2212') + f(Math.round(Math.abs(diff)));
+
+  if (isDiffPositive) {
+    set('delta-desc', `Mit ZEV erzielen Sie ${f(Math.round(diff))} CHF mehr Einnahmen pro Jahr. Dies entspricht ${f(diff / r.no_cf * 100, 1)}% mehr j\u00E4hrliche Rendite als ohne ZEV.`);
+  } else {
+    set('delta-desc', `Ohne ZEV erzielen Sie ${f(Math.round(Math.abs(diff)))} CHF mehr Einnahmen pro Jahr. ZEV reduziert Ihre j\u00E4hrliche Rendite um ${f(Math.abs(diff / r.no_cf * 100), 1)}%.`);
+  }
+
+  return diff;
+}
+
+// ── Render: Hero Cards ──
+function renderHeroCards(r, diff) {
+  const zevWinsCf = r.z_cf >= r.no_cf;
+  const cfBadgeText = `Differenz: ${(diff >= 0 ? '+' : '\u2212')} ${f(Math.round(Math.abs(diff)))} CHF / Jahr`;
+  updateHeroCardCompare('cf', f(Math.round(r.no_cf)) + ' CHF', f(Math.round(r.z_cf)) + ' CHF',
+    !zevWinsCf, cfBadgeText, diff >= 0 ? 'hc-foot-pos' : 'hc-foot-neg');
+  // Manually set rendite-badge since it has a different ID pattern
+  const cfBadge = document.getElementById('hc-rendite-badge');
+  if (cfBadge) { cfBadge.textContent = cfBadgeText; cfBadge.className = diff >= 0 ? 'hc-foot-pos' : 'hc-foot-neg'; }
+
+  // Amortisation
+  const fmtAmor = (val) => (isFinite(val) && val > 0 && val < 99) ? f(val, 1) + ' Jahre' : '> 25 Jahre';
+  const aNo = (isFinite(r.no_amor) && r.no_amor > 0 && r.no_amor < 99) ? r.no_amor : Infinity;
+  const aZev = (isFinite(r.z_amor) && r.z_amor > 0 && r.z_amor < 99) ? r.z_amor : Infinity;
+  const zevWinsAmor = (aZev <= aNo) && isFinite(aZev);
+  const noWinsAmor = (aNo < aZev) && isFinite(aNo);
+
+  set('hc-am-no-val', fmtAmor(r.no_amor));
+  const hcAmNoBox = document.getElementById('hc-am-no-box');
+  if (hcAmNoBox) {
+    hcAmNoBox.className = 'hc-side ' + (noWinsAmor ? 'is-winner' : (zevWinsAmor ? 'is-loser' : ''));
+    document.getElementById('hc-am-no-badge').style.display = noWinsAmor ? 'inline-block' : 'none';
+  }
+  set('hc-am-zev-val', fmtAmor(r.z_amor));
+  const hcAmZevBox = document.getElementById('hc-am-zev-box');
+  if (hcAmZevBox) {
+    hcAmZevBox.className = 'hc-side ' + (zevWinsAmor ? 'is-winner' : (noWinsAmor ? 'is-loser' : ''));
+    document.getElementById('hc-am-zev-badge').style.display = zevWinsAmor ? 'inline-block' : 'none';
+  }
+  const amBadge = document.getElementById('hc-am-badge');
+  if (amBadge) {
+    if (!isFinite(aNo) && !isFinite(aZev)) {
+      amBadge.textContent = 'Beide unwirtschaftlich'; amBadge.className = 'hc-foot-neg';
+    } else if (!isFinite(aNo)) {
+      amBadge.textContent = 'Ohne ZEV nicht amortisierbar'; amBadge.className = 'hc-foot-pos';
+    } else if (!isFinite(aZev)) {
+      amBadge.textContent = 'Mit ZEV nicht amortisierbar'; amBadge.className = 'hc-foot-neg';
+    } else {
+      const amDiff = aZev - aNo;
+      amBadge.textContent = `Differenz: ${(amDiff > 0 ? '+' : '\u2212')} ${f(Math.abs(amDiff), 1)} Jahre`;
+      amBadge.className = amDiff <= 0 ? 'hc-foot-pos' : 'hc-foot-neg';
+    }
+  }
+
+  // 25 Jahre Hero
+  const zevWins25 = r.zev_total25 >= r.no_total25;
+  updateHeroCardCompare('25', f(Math.round(r.no_total25)) + ' CHF', f(Math.round(r.zev_total25)) + ' CHF', !zevWins25);
+  const y25Badge = document.getElementById('hc-25-badge');
+  if (y25Badge) {
+    const y25Diff = r.zev_total25 - r.no_total25;
+    y25Badge.textContent = `Differenz: ${(y25Diff >= 0 ? '+' : '\u2212')} ${f(Math.round(Math.abs(y25Diff)))} CHF`;
+    y25Badge.className = y25Diff >= 0 ? 'hc-foot-pos' : 'hc-foot-neg';
+  }
+
+  // Mieter Hero
+  const zevWinsMieter = r.m_tot > 0;
+  set('hc-mi-zev-val', f(r.m_tot, 2) + ' CHF');
+  const hcMiZevBox = document.getElementById('hc-mi-zev-box');
+  if (hcMiZevBox) {
+    hcMiZevBox.className = 'hc-side ' + (zevWinsMieter ? 'is-winner' : 'is-loser');
+    document.getElementById('hc-mi-zev-badge').style.display = zevWinsMieter ? 'inline-block' : 'none';
+    document.getElementById('hc-mi-no-box').className = 'hc-side ' + (!zevWinsMieter ? 'is-winner' : 'is-loser');
+    const miBadge = document.getElementById('hc-mi-badge');
+    if (zevWinsMieter) {
+      miBadge.textContent = 'Win-Win f\u00FCr alle Parteien'; miBadge.className = 'hc-foot-pos';
+    } else {
+      miBadge.textContent = 'Keine Ersparnis f\u00FCr Mieter'; miBadge.className = 'hc-foot-neg';
+    }
+  }
+}
+
+// ── Render: 25 Jahre Section ──
+function render25Jahre(r) {
+  const signNoEin = r.no_ein25 < 0 ? '\u2212' : '+';
+  set('y25-no-ein', signNoEin + f(Math.abs(Math.round(r.no_ein25))) + ' CHF');
+  set('y25-no-inv', '\u2212' + f(Math.abs(Math.round(r.inv))) + ' CHF');
+  set('y25-no-amor', f(r.no_amor, 1) + ' Jahre');
+  set('y25-no-total', f(Math.round(r.no_total25)) + ' CHF');
+
+  const signZevEin = r.zev_ein25 < 0 ? '\u2212' : '+';
+  set('y25-zev-ein', signZevEin + f(Math.abs(Math.round(r.zev_ein25))) + ' CHF');
+  set('y25-zev-inv', '\u2212' + f(Math.abs(Math.round(r.zev_inv25))) + ' CHF');
+  set('y25-zev-op', '\u2212' + f(Math.abs(Math.round(r.totW * 25))) + ' CHF');
+  set('y25-zev-amor', (isFinite(r.z_amor) ? f(r.z_amor, 1) : '\u2014') + ' Jahre');
+  set('y25-zev-total', f(Math.round(r.zev_total25)) + ' CHF');
+}
+
+// ── Render: Timeline Chart ──
+function renderTimeline(r) {
+  const chartEl = document.getElementById('timeline-chart');
+  chartEl.innerHTML = '';
+
+  const { noVals, zevVals, crossoverYear, maxVal } = r.timeline;
+  const scale = v => Math.min(48, Math.abs(v) / maxVal * 45);
   const showYears = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 15, 20, 25];
+
   showYears.forEach(y => {
     const nv = noVals[y - 1];
     const zv = zevVals[y - 1];
@@ -1038,7 +934,6 @@ function calc() {
 
     const nDir = nv >= 0 ? 'pos' : 'neg';
     const zDir = zv >= 0 ? 'pos' : 'neg';
-
     const noLabel = (nv >= 0 ? '+' : '') + f(Math.round(nv / 1000), 1) + 'k';
     const zevLabel = (zv >= 0 ? '+' : '') + f(Math.round(zv / 1000), 1) + 'k';
 
@@ -1066,81 +961,120 @@ function calc() {
   } else {
     crossLeg.style.display = 'none';
   }
+}
 
-  // Kosten UI Updates
+// ── Render: Kosten Section ──
+function renderKosten(r) {
+  const { serverTyp, modul, totE, totW, variableKostenEinmalig, variableKostenJaehrlich, vertragKosten, anzahlZaehler } = r;
   set('k-einmalig', f(totE) + ' CHF');
 
-  // Build dynamic HTML for Einmalige Kosten
-  let eHtml = '';
   const makeRow = (lbl, val) => `<div class="kost-row"><span class="kr-label">${lbl}</span><span class="kr-val">${val}</span></div>`;
-
-  eHtml += makeRow(`Server & Grundsetup (${PREISKATALOG.server[serverTyp].label})`, f(PREISKATALOG.server[serverTyp].einmalig + PREISKATALOG.einbau_server.einmalig));
-  eHtml += makeRow(`Hardware & Setup pro WE+1 (${anzahlZaehler}x)`, f(variableKostenEinmalig));
-
-  // Use a helper to check toggle state (defaults to "nein" if not set initially)
   const isToggled = (key) => (tog[key] || 'nein') === 'ja';
 
+  let eHtml = '';
+  eHtml += makeRow(`Server & Grundsetup (${PREISKATALOG.server[serverTyp].label})`, f(PREISKATALOG.server[serverTyp].einmalig + PREISKATALOG.einbau_server.einmalig));
+  eHtml += makeRow(`Hardware & Setup pro WE+1 (${anzahlZaehler}x)`, f(variableKostenEinmalig));
   if (isToggled('po')) eHtml += makeRow('PV & EMS Nutzerportal', f(PREISKATALOG.portal.einmalig));
   if (isToggled('iz')) eHtml += makeRow('Internetzugang Server', f(PREISKATALOG.internetzugang.einmalig));
-  if (isToggled('ma')) eHtml += makeRow('Machbarkeitsabklärung', f(PREISKATALOG.machbarkeit.einmalig));
+  if (isToggled('ma')) eHtml += makeRow('Machbarkeitsabkl\u00E4rung', f(PREISKATALOG.machbarkeit.einmalig));
   if (isToggled('be')) eHtml += makeRow('Begehung vor Ort', f(PREISKATALOG.begehung.einmalig));
   if (isToggled('zv')) eHtml += makeRow('ZEV Vertragserstellung', f(vertragKosten));
-
   document.getElementById('kosten-einmalig-rows').innerHTML = eHtml;
 
-  // Build dynamic HTML for Wiederkehrende Kosten
   set('k-wiederk', f(totW) + ' CHF');
-
   let wHtml = '';
   wHtml += makeRow(`Server Abo (${PREISKATALOG.server[serverTyp].label})`, f(PREISKATALOG.server[serverTyp].jaehrlich));
   if (isToggled('po')) wHtml += makeRow('PV & EMS Nutzerportal', f(PREISKATALOG.portal.jaehrlich));
   if (isToggled('iz')) wHtml += makeRow('Internetzugang Server', f(PREISKATALOG.internetzugang.jaehrlich));
   if (window.kuType === 'mieter') {
     wHtml += `<div class="kost-row" style="opacity:0.5;"><span class="kr-label" style="text-decoration:line-through;">Abrechnungsmodul (${PREISKATALOG.abrechnungsmodul[modul].label})</span><span class="kr-val" style="text-decoration:line-through;">${f(variableKostenJaehrlich)}</span></div>`;
-    wHtml += `<div style="font-size:10.5px; color:var(--brand-cyan-dark); text-align:right; margin-top:-4px; margin-bottom:6px; font-weight:600;">Direkt über Mieter-Nebenkosten finanziert</div>`;
+    wHtml += `<div style="font-size:10.5px; color:var(--brand-cyan-dark); text-align:right; margin-top:-4px; margin-bottom:6px; font-weight:600;">Direkt \u00FCber Mieter-Nebenkosten finanziert</div>`;
   } else {
     wHtml += makeRow(`Abrechnungsmodul (${PREISKATALOG.abrechnungsmodul[modul].label})`, f(variableKostenJaehrlich));
   }
-
   document.getElementById('kosten-wiederkehrend-rows').innerHTML = wHtml;
+}
 
-  // Mieter
-  set('m-strom', f(m_str, 2) + ' CHF');
-  set('m-zaehler', f(m_zk, 2) + ' CHF');
-  set('m-zev', f(m_zev, 2) + ' CHF');
-  set('m-total', f(m_tot, 2) + ' CHF');
+// ── Render: Mieter & HK Section ──
+function renderMieterAndHK(r) {
+  set('m-strom', f(r.m_str, 2) + ' CHF');
+  set('m-zaehler', f(r.m_zk, 2) + ' CHF');
+  set('m-zev', f(r.m_zev, 2) + ' CHF');
+  set('m-total', f(r.m_tot, 2) + ' CHF');
 
-  // Hero Card 4 (Mieter Ersparnis per Jahr)
-  const hcMiZevBox = document.getElementById('hc-mi-zev-box');
-  if (hcMiZevBox) {
-    const zevWinsMieter = m_tot > 0;
+  set('hk-invest', f(r.inv) + ' CHF');
+  set('hk-unterhalt', f(Math.round(r.uh25)) + ' CHF');
+  set('hk-prod', f(Math.round(r.p25)) + ' kWh');
+  set('hk-kwh', f(r.hk * 100, 2) + ' Rp./kWh');
+  set('hk-kwh2', f(r.hk * 100, 2) + ' Rp./kWh');
+}
 
-    set('hc-mi-zev-val', f(m_tot, 2) + ' CHF');
-    hcMiZevBox.className = 'hc-side ' + (zevWinsMieter ? 'is-winner' : 'is-loser');
-    document.getElementById('hc-mi-zev-badge').style.display = zevWinsMieter ? 'inline-block' : 'none';
+// ── Render: Winner Box & Dynamic Styling ──
+function renderWinnerStyling(r, diff) {
+  const zevWins = r.gain25diff >= 0;
 
-    document.getElementById('hc-mi-no-box').className = 'hc-side ' + (!zevWinsMieter ? 'is-winner' : 'is-loser');
+  set('wb-val', f(Math.round(Math.abs(r.gain25diff))));
+  document.getElementById('delta-box').className = 'delta-box ' + (zevWins ? '' : 'is-negative');
+  document.getElementById('sc-head-A').className = 'sc-head ' + (zevWins ? 'is-loser' : 'is-winner');
+  document.getElementById('sc-head-B').className = 'sc-head ' + (zevWins ? 'is-winner' : 'is-loser');
+  document.getElementById('yc-head-A').className = 'yr25-card-head ' + (zevWins ? 'is-loser' : 'is-winner');
+  document.getElementById('yc-head-B').className = 'yr25-card-head ' + (zevWins ? 'is-winner' : 'is-loser');
 
-    const miBadge = document.getElementById('hc-mi-badge');
-    if (zevWinsMieter) {
-      miBadge.textContent = 'Win-Win für alle Parteien';
-      miBadge.className = 'hc-foot-pos';
-    } else {
-      miBadge.textContent = 'Keine Ersparnis für Mieter';
-      miBadge.className = 'hc-foot-neg';
-    }
+  document.getElementById('sc-label-A').textContent = 'Szenario A' + (zevWins ? '' : ' \u2014 Empfohlen');
+  document.getElementById('sc-label-B').textContent = 'Szenario B' + (zevWins ? ' \u2014 Empfohlen' : '');
+  document.getElementById('yc-label-A').textContent = 'Szenario A' + (zevWins ? '' : ' \u2014 Empfohlen');
+  document.getElementById('yc-label-B').textContent = 'Szenario B' + (zevWins ? ' \u2014 Empfohlen' : '');
+
+  document.getElementById('wb-title').textContent = zevWins
+    ? 'ZEV erzielt \u00FCber 25 Jahre einen h\u00F6heren Gesamtgewinn'
+    : 'Ohne ZEV ist in diesem Szenario rentabler';
+  document.getElementById('wb-desc').textContent = zevWins
+    ? `Obwohl die Amortisationszeit mit ZEV ${f(Math.abs(r.z_amor - r.no_amor), 1)} Jahre l\u00E4nger dauert, ` +
+    `\u00FCberwiegen die h\u00F6heren j\u00E4hrlichen Ertr\u00E4ge deutlich. Nach ${f(isFinite(r.z_amor) ? r.z_amor : 0, 1)} Jahren ` +
+    `ist die Investition vollst\u00E4ndig amortisiert \u2014 danach erzielen Sie jedes Jahr ${f(Math.round(diff))} CHF mehr Ertrag.`
+    : `In diesem Szenario fressen die wiederkehrenden ZEV-Kosten (Abrechnung etc.) den Gewinn der Stromeinsparung auf. ZEV ist hier ein Verlustgesch\u00E4ft im Vergleich zur einfachen \u00DCberschusseinspeisung.`;
+}
+
+// ══ Main Calculation Orchestrator ══
+function calc() {
+  const we = clampInput('anzahlWE', 1, 500, 1);
+  const off = clampInput('offerte', 0, 10000000, 0);
+  const foe = clampInput('foerderung', 0, 10000000, 0);
+  const pro = clampInput('produktion', 0, 99999999, 0);
+
+  if (off === 0 || pro === 0) {
+    clearCalc();
+    return;
   }
 
-  // HK
-  set('hk-invest', f(inv) + ' CHF');
-  set('hk-unterhalt', f(Math.round(uh25)) + ' CHF');
-  set('hk-prod', f(Math.round(p25)) + ' kWh');
-  set('hk-kwh', f(hk * 100, 2) + ' Rp./kWh');
-  set('hk-kwh2', f(hk * 100, 2) + ' Rp./kWh');
+  const pctZev = +document.getElementById('sl-split').value;
+  const pctEi = 80 - pctZev;
+  const pctEigen = 20;
+
+  const modul = document.getElementById('modulSelect').value || 'L';
+
+  const r = calculateScenarios({
+    we, off, foe, pro, pctZev, pctEi, pctEigen, modul,
+    hasBoiler: tog.bo === 'ja',
+    sp: T.sp / 100,
+    ev: T.ev / 100,
+    zt: T.zt / 100,
+    zm: T.zm || 5.00
+  });
+
+  // Render all sections
+  renderFlowSection(r);
+  const diff = renderCompareSection(r);
+  renderHeroCards(r, diff);
+  render25Jahre(r);
+  renderTimeline(r);
+  renderKosten(r);
+  renderMieterAndHK(r);
+  renderWinnerStyling(r, diff);
 }
 
 ['wp', 'em', 'ma', 'zv'].forEach(k => document.getElementById(`${k}-nein`).classList.add('on'));
-calc();
+calcAndUpdate();
 onSplitSlider();
 
 // ── Section Navigation ──
@@ -1349,13 +1283,15 @@ async function updatePowerMix() {
     const val = consumption[s.key] || 0;
     if (val <= 0) return;
     const pct = (val / total * 100).toFixed(1);
+    // Values are numeric from API — safe to interpolate, but we escape the label
+    const safeLabel = s.label.replace(/[<>&"']/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&#39;' }[c]));
     html += `
       <div class="co2-mix-row">
-        <span class="co2-mix-label">${s.label}</span>
+        <span class="co2-mix-label">${safeLabel}</span>
         <div class="co2-mix-track">
-          <div class="co2-mix-fill" style="width:${pct}%; background:${s.color}"></div>
+          <div class="co2-mix-fill" style="width:${parseFloat(pct)}%; background:${s.color}"></div>
         </div>
-        <span class="co2-mix-pct">${pct}%</span>
+        <span class="co2-mix-pct">${parseFloat(pct)}%</span>
       </div>`;
   });
 
@@ -1368,12 +1304,11 @@ async function updatePowerMix() {
   }
 }
 
-// Hook CO2 update into the main calc function
-const _origCalc = calc;
-calc = function () {
-  _origCalc();
+// Hook CO2 update into the main calc function — clean wrapper
+function calcAndUpdate() {
+  calc();
   updateCO2();
-};
+}
 
 // Initial fetch on load
 updateCO2();

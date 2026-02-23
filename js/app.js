@@ -158,12 +158,17 @@ function updateEvValue() {
 // Apply tariff data to the calculator and UI
 function applyTariff(operatorName, totalRp, energyRp, gridusageRp, chargeRp, aidfeeRp) {
   window.lastOperatorName = operatorName;
+
+  const catSelect = document.getElementById('tariffCategorySelect');
+  const catCode = catSelect ? catSelect.value : 'H4';
+  const catText = catSelect ? catSelect.options[catSelect.selectedIndex].text : 'H4 (Haushalt, 4\'500 kWh/J)';
+
   T = {
     sp: totalRp,
     ev: 6.00, // Einspeisevergütung: min 6 Rp/kWh nach neuem Stromgesetz 2026
     zt: Math.round(totalRp * 0.8 * 100) / 100, // ZEV = 80% des Netzpreises
     zm: T.zm || 5.00,
-    name: operatorName + ' H4',
+    name: operatorName + ' ' + catCode,
     ev_quelle: 'Mindestvergütung' // Gesetzlich festgelegt ab 2026
   };
   // Top-bar
@@ -182,7 +187,7 @@ function applyTariff(operatorName, totalRp, energyRp, gridusageRp, chargeRp, aid
         <span style="font-weight:700">Total:</span><span class="tg-val" style="color:var(--brand-cyan-dark)">${totalRp.toFixed(2)} Rp/kWh</span>
         <span>Einspeiseverg\u00FCtung:</span><span class="tg-val">${T.ev.toFixed(2)} Rp/kWh <em style="font-size:9px;color:var(--muted)">(Minimum)</em></span>
       `;
-  document.getElementById('tariffDetail').textContent = 'Kat. H4 (5-Zi-Whg, 4\'500 kWh/J) \u00B7 Quelle: LINDAS OGD \u00B7 Einspeisung: Gesetzliches Minimum';
+  document.getElementById('tariffDetail').textContent = `Kat. ${catText} \u00B7 Quelle: LINDAS OGD \u00B7 Einspeisung: Gesetzliches Minimum`;
   setTariffSummary(totalRp);
   info.classList.add('visible');
   // Hide loading
@@ -420,6 +425,11 @@ async function fetchMunicipalityAndTariff(x, y) {
     return;
   }
 
+  // Save bfsNr on the dropdown so changing Tariff settings later can reuse it
+  if (bfsNr) {
+    document.getElementById('addrDropdown').dataset.bfsNr = bfsNr;
+  }
+
   // Step 2a: Try ElCom GraphQL API (updated schema 2026)
   if (bfsNr) {
     const gqlBody = {
@@ -597,12 +607,21 @@ document.addEventListener('click', (e) => {
 
 /* \u2500\u2500 ElCom Tariff Auto-Detection \u2500\u2500 */
 
+function onTariffCategoryChange() {
+  const bfsNr = document.getElementById('addrDropdown').dataset.bfsNr;
+  if (bfsNr) {
+    fetchElcomTariff(bfsNr);
+  }
+}
+
 async function fetchElcomTariff(bfsNr) {
   const info = document.getElementById('tariffInfo');
   info.classList.remove('visible');
   document.getElementById('tariffLoading').style.display = 'block';
 
   try {
+    const catSelect = document.getElementById('tariffCategorySelect');
+    const categoryCode = catSelect ? catSelect.value : 'H4';
     const endpoint = 'https://lindas-cached.cluster.ldbar.ch/query';
     const query = `
 PREFIX cube: <https://cube.link/>
@@ -611,7 +630,7 @@ PREFIX schema: <http://schema.org/>
 SELECT ?operator ?total ?energy ?gridusage ?charge ?aidfee ?period WHERE {
   ?obs a cube:Observation ;
        <https://energy.ld.admin.ch/elcom/electricityprice/dimension/municipality> <https://ld.admin.ch/municipality/${bfsNr}> ;
-       <https://energy.ld.admin.ch/elcom/electricityprice/dimension/category> <https://energy.ld.admin.ch/elcom/electricityprice/category/H4> ;
+       <https://energy.ld.admin.ch/elcom/electricityprice/dimension/category> <https://energy.ld.admin.ch/elcom/electricityprice/category/${categoryCode}> ;
        <https://energy.ld.admin.ch/elcom/electricityprice/dimension/product> <https://energy.ld.admin.ch/elcom/electricityprice/product/standard> .
        
   OPTIONAL { 

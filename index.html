@@ -123,6 +123,33 @@
         <div class="sb-heading">Objekt & Anlage</div>
 
         <div class="field">
+          <div class="field-label" style="display:flex; justify-content:space-between; align-items:center;">
+            <span>Tarifkategorie (Strom)</span>
+            <span class="badge badge-gray" style="font-size:9px; padding:2px 4px;">LINDAS</span>
+          </div>
+          <div class="ctrl">
+            <select id="tariffCategorySelect" onchange="onTariffCategoryChange()"
+              style="width:100%; border:none; background:transparent; font-family:'Manrope',sans-serif; color:var(--brand-black); font-size:13px; outline:none; cursor:pointer;">
+              <option value="H1">H1 (Haushalt, 1'600 kWh/J)</option>
+              <option value="H2">H2 (Haushalt, 2'500 kWh/J)</option>
+              <option value="H3">H3 (Haushalt, 4'500 kWh/J)</option>
+              <option value="H4" selected>H4 (Haushalt, 4'500 kWh/J)</option>
+              <option value="H5">H5 (Haushalt, 7'500 kWh/J)</option>
+              <option value="H6">H6 (Haushalt, 25'000 kWh/J)</option>
+              <option value="H7">H7 (Haushalt, 13'000 kWh/J)</option>
+              <option value="H8">H8 (Haushalt, 7'500 kWh/J, Boiler)</option>
+              <option value="C1">C1 (Gewerbe, 8'000 kWh/J)</option>
+              <option value="C2">C2 (Gewerbe, 30'000 kWh/J)</option>
+              <option value="C3">C3 (Gewerbe, 150'000 kWh/J)</option>
+              <option value="C4">C4 (Gewerbe, 500'000 kWh/J)</option>
+              <option value="C5">C5 (Gewerbe, 1'500'000 kWh/J)</option>
+              <option value="C6">C6 (Gewerbe, 1'500'000 kWh/J)</option>
+              <option value="C7">C7 (Gewerbe, 1'500'000 kWh/J)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
           <div class="field-label">Anzahl Wohneinheiten
             <span class="tip" data-tip="Anzahl der Wohnungen im Mehrfamilienhaus">?</span>
           </div>

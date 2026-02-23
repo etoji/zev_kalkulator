@@ -608,23 +608,23 @@ async function fetchElcomTariff(bfsNr) {
 PREFIX cube: <https://cube.link/>
 PREFIX schema: <http://schema.org/>
 
-SELECT ?operator ?total ?energy ?gridusage ?charge ?aidfee WHERE {
+SELECT ?operator ?total ?energy ?gridusage ?charge ?aidfee ?period WHERE {
   ?obs a cube:Observation ;
        <https://energy.ld.admin.ch/elcom/electricityprice/dimension/municipality> <https://ld.admin.ch/municipality/${bfsNr}> ;
        <https://energy.ld.admin.ch/elcom/electricityprice/dimension/category> <https://energy.ld.admin.ch/elcom/electricityprice/category/H4> ;
-       <https://energy.ld.admin.ch/elcom/electricityprice/dimension/product> <https://energy.ld.admin.ch/elcom/electricityprice/product/standard> ;
-       <https://energy.ld.admin.ch/elcom/electricityprice/dimension/period> "2026"^^<http://www.w3.org/2001/XMLSchema#gYear> .
+       <https://energy.ld.admin.ch/elcom/electricityprice/dimension/product> <https://energy.ld.admin.ch/elcom/electricityprice/product/standard> .
        
   OPTIONAL { 
     ?obs <https://energy.ld.admin.ch/elcom/electricityprice/dimension/operator> ?opUri .
     ?opUri schema:name ?operator .
   }
+  OPTIONAL { ?obs <https://energy.ld.admin.ch/elcom/electricityprice/dimension/period> ?period }
   OPTIONAL { ?obs <https://energy.ld.admin.ch/elcom/electricityprice/dimension/total> ?total }
   OPTIONAL { ?obs <https://energy.ld.admin.ch/elcom/electricityprice/dimension/energy> ?energy }
   OPTIONAL { ?obs <https://energy.ld.admin.ch/elcom/electricityprice/dimension/gridusage> ?gridusage }
   OPTIONAL { ?obs <https://energy.ld.admin.ch/elcom/electricityprice/dimension/charge> ?charge }
   OPTIONAL { ?obs <https://energy.ld.admin.ch/elcom/electricityprice/dimension/aidfee> ?aidfee }
-} LIMIT 1
+} ORDER BY DESC(?period) LIMIT 1
 `;
 
     const r = await fetch(endpoint, {
